@@ -1,0 +1,37 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "colcon package",
+            "type": "shell",
+            "options": {
+                "cwd": "${workspaceFolder}",
+                "statusbar": {
+                    "color": "#d66722"
+                },
+            },
+            "command": "colcon build --symlink-install --merge-install --packages-up-to ${input:packages}",
+            "problemMatcher": []
+        },
+        {
+            "label": "build docker dev",
+            "type": "shell",
+            "command": "docker build -f .devcontainer/Dockerfile.dev  -t pov:dev ."
+        },
+        {
+            "label": "build docker runtime",
+            "type": "shell",
+            "command": "docker build -f .devcontainer/Dockerfile.runtime  -t pov:runtime ."
+        }
+    ],
+    "inputs": [
+        {
+            "id": "packages",
+            "description": "application packages",
+            "type": "pickString",
+            "options": [
+                "GStream"
+            ]
+        }
+    ]
+}

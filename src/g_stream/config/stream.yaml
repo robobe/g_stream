@@ -1,0 +1,20 @@
+stream_node:
+  ros__parameters:
+    bitrate: 4000  # in kbps
+    fps: 30
+
+    preset: "low"
+
+
+
+    low:
+      fps: 5
+      bitrate: 10
+
+    medium:
+      fps: 10
+      bitrate: 10
+
+    high:
+      fps: 20
+      bitrate: 10

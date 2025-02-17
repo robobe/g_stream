@@ -1,0 +1,26 @@
+session_name: my_session
+windows:
+  - window_name: my_window
+    layout: even-vertical
+    shell_command_before:
+      - source /opt/ros/humble/setup.bash
+      - export RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
+    panes:
+      - shell_command: #
+          - printf '\033]2;%s\033\\' 'source1'
+          - export GSCAM_CONFIG="videotestsrc ! video/x-raw,width=640,height=480,framerate=30/1 ! videoconvert"
+          - ros2 run gscam gscam_node --ros-args -r /camera/image_raw:=image1
+      - shell_command: #
+          - printf '\033]2;%s\033\\' 'source2'
+          - export GSCAM_CONFIG="videotestsrc pattern=snow ! video/x-raw,width=640,height=480,framerate=30/1 ! videoconvert"
+          - ros2 run gscam gscam_node --ros-args -r /camera/image_raw:=image2
+      - shell_command: #
+          - printf '\033]2;%s\033\\' 'mux'
+          - ros2 run topic_tools mux out_image image1 image2  
+      - shell_command: #
+          - printf '\033]2;%s\033\\' 'mux'
+          - ros2 run rqt_image_view rqt_image_view out_image
+      - shell_command: 
+          - printf '\033]2;%s\033\\' 'control'
+          - ros2 service call /mux/list topic_tools_interfaces/srv/MuxList "{}"
+          # - ros2 service call /mux/select topic_tools_interfaces/srv/MuxSelect "{topic: 'image2'}"

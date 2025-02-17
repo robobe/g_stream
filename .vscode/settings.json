@@ -1,0 +1,13 @@
+{
+    "python.analysis.extraPaths": [
+        "/home/user/.local/lib/python3.10/site-packages"
+    ],
+    "terminal.integrated.profiles.linux": {
+        "bash": {
+            "path": "bash",
+            "icon": "terminal-bash",
+            "args": ["--rcfile", "/workspaces/env.sh"]
+        }
+    }
+    
+}

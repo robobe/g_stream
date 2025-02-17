@@ -1,0 +1,19 @@
+session_name: my_session
+windows:
+  - window_name: my_window
+    shell_command_before:
+      - source /opt/ros/humble/setup.bash
+      - export RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
+      - export CYCLONEDDS_URI=file:///workspace/cyclonedds.xml
+    panes:
+      - shell_command: 
+          - printf '\033]2;%s\033\\' 'roudi'
+          - iox-roudi  # Runs script1 in the first pane
+        focus: true
+      - shell_command: #
+          - printf '\033]2;%s\033\\' 'gscam'
+          - export GSCAM_CONFIG="videotestsrc pattern=snow ! video/x-raw,width=640,height=480,framerate=30/1 ! videoconvert"
+          - ros2 run gscam gscam_node
+      - shell_command: #
+          - printf '\033]2;%s\033\\' 'rqt'
+          - ros2 run rqt_image_view rqt_image_view

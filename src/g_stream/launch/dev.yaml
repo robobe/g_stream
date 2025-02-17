@@ -1,0 +1,15 @@
+session_name: dev
+windows:
+  - window_name: dev
+    layout: even-vertical
+    shell_command_before:
+      - source /opt/ros/humble/setup.bash
+      - export RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
+    panes:
+      - shell_command: #
+          - printf '\033]2;%s\033\\' 'source'
+          - export GSCAM_CONFIG="videotestsrc ! video/x-raw,width=640,height=480,framerate=10/1 ! videoconvert"
+          - ros2 run gscam gscam_node
+      - shell_command: #
+          - printf '\033]2;%s\033\\' 'view'
+          - ros2 run rqt_image_view rqt_image_view

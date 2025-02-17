@@ -1,0 +1,30 @@
+{
+  "name": "gst_stream",
+  "dockerComposeFile": "../docker-compose.yml",
+  "service": "dev",
+  "shutdownAction": "stopCompose",
+  "workspaceFolder": "/workspace",
+  "remoteUser": "user",
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ms-vscode.cpptools",
+        "twxs.cmake",
+        "albert.tabout",
+        "redhat.vscode-xml",
+        "ms-python.python",
+        "redhat.vscode-yaml",
+        "actboy168.tasks",
+        "streetsidesoftware.code-spell-checker",
+        "ms-python.black-formatter",
+        "ms-python.isort",
+        "rioj7.command-variable",
+        "mhutchie.git-graph",
+        "dlech.chmod",
+        "mkloubert.vscode-deploy-reloaded",
+        "shd101wyy.markdown-preview-enhanced"
+      ],
+      "settings": {}
+    }
+  }
+}

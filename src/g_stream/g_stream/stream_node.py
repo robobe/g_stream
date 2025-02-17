@@ -29,16 +29,25 @@ import minimal_pipe
 
 # region consts
 DEFAULT_FPS = 10
+DEFAULT_MTU = 1400
+DEFAULT_HOST = "127.0.0.1"
+DEFAULT_PORT = 5000
 # endregion
 
 # region parameters
 PARAM_BITRATE = "bitrate"
 PARAM_FPS = "fps"
-
+PARAM_MTU = "mtu"
+PARAM_ENCODER_TYPE = "encoder_type"
 PARAM_PRESET = "preset"
 PARAM_PRESET_LOW = "preset_low"
 PARAM_PRESET_MEDIUM = "preset_medium"
 PARAM_PRESET_HIGH = "preset_high"
+PARAM_HOST = "host"
+PARAM_PORT = "port"
+PARAM_VBV = "vbv"
+PARAM_ARCH = "arch"
+PARAM_TEST_ENABLE = "test_enable"
 # end region
 
 NAME = "stream_node"
@@ -50,6 +59,10 @@ SRV_PRESET = "set_preset"
 # end region
 
 # region helper class
+class EncoderArch(Enum):
+    CPU = "cpu"
+    NVIDIA = "nvidia"
+
 class Presets(Enum):
     LOW = "low"
     MEDIUM = "medium"
@@ -57,7 +70,9 @@ class Presets(Enum):
 
 # end region
 
-
+class EncoderType(Enum):
+    H264 = "h264"
+    H265 = "h265"
 
 class StreamHandlerNode(Node):
     def __init__(self):
@@ -74,14 +89,7 @@ class StreamHandlerNode(Node):
         self.add_on_set_parameters_callback(self.parameters_handler)
         self.play()
 
-    def __timer_handler(self):
-        preset1 = self.get_parameter("low.fps").value
-        preset2 = self.get_parameter("medium.fps").value
-        preset3 = self.get_parameter("high.fps").value
 
-        self.get_logger().info(f"current preset {preset1}")
-        self.get_logger().info(f"current preset {preset2}")
-        self.get_logger().info(f"current preset {preset3}")
 
     # region init
     def _init_services(self):
@@ -95,16 +103,21 @@ class StreamHandlerNode(Node):
     # region parameters
 
     def parameters_handler(self, params: List[Parameter]):
-        self.get_logger().info(f"---------------------------bb")
         success = True
         param_result = SetParametersResult()
         for param in params:
             try:
                 if param.name == PARAM_PRESET:
                     # throw exception on not valid value #TODO: think again for exception for login issue
-                    preset = Presets(param.value)
-                    
-                
+                    _ = Presets(param.value)
+
+                if param.name == PARAM_ENCODER_TYPE:
+                    # throw exception on not valid value #TODO: think again for exception for login issue
+                    _ = EncoderType(param.value)
+
+                if param.name == PARAM_ARCH:
+                    # throw exception on not valid value #TODO: think again for exception for login issue
+                    _ = EncoderArch(param.value)
 
                 success = True
 
@@ -126,8 +139,16 @@ class StreamHandlerNode(Node):
 
         #default_preset
         # preset_descriptor = ParameterDescriptor(type=Presets)
+        self.declare_parameter(PARAM_TEST_ENABLE, value=True)
+        self.declare_parameter(PARAM_VBV, value=DEFAULT_FPS)
         self.declare_parameter(PARAM_PRESET, value=Presets.LOW.value)
+        self.declare_parameter(PARAM_MTU, value=DEFAULT_MTU)
+        self.declare_parameter(PARAM_ENCODER_TYPE, value=EncoderType.H264.value)
         self.declare_parameter(PARAM_FPS,value=DEFAULT_FPS)
+        self.declare_parameter(PARAM_HOST, value=DEFAULT_HOST)
+        self.declare_parameter(PARAM_PORT, value=DEFAULT_PORT)
+        self.declare_parameter(PARAM_ARCH, value=EncoderArch.CPU.value)
+
         for group in ["low", "medium", "high"]:
             for item in ["fps", "bitrate"]:
 
@@ -196,8 +217,37 @@ class StreamHandlerNode(Node):
     
     def build_pipe(self):
         preset = self.get_parameter(PARAM_PRESET).value
+        
         fps = self.get_parameter(f"{preset}.fps").value
-        pipeline_desc = f"videotestsrc ! video/x-raw,width=640,height=480 ! videoconvert ! videorate ! video/x-raw,framerate={fps}/1 ! fpsdisplaysink"
+        bitrate = self.get_parameter(f"{preset}.bitrate").value
+        encoder_type = EncoderType(self.get_parameter(PARAM_ENCODER_TYPE).value)
+        encoder_arch = EncoderArch(self.get_parameter(PARAM_ARCH).value)
+        vbv = self.get_parameter(PARAM_VBV).value
+        mtu = self.get_parameter(PARAM_MTU).value
+        port = self.get_parameter(PARAM_PORT).value
+        host = self.get_parameter(PARAM_HOST).value
+        test_enable = self.get_parameter(PARAM_TEST_ENABLE).value
+
+        pipe_header = "appsrc name=src is-liver=true "
+        if test_enable:
+            pipe_header = "videotestsrc is-live=true ! video/x-raw, width=640, height=480, framerate=30/1, format=I420 "
+        
+        if encoder_type == EncoderType.H264 and encoder_arch==EncoderArch.CPU:
+            self.get_logger().warning("encoder not support vbv argument")
+
+            pipeline_desc = f"""{pipe_header}
+            ! videoconvert \
+            ! queue max-size-buffers=1 leaky=downstream \
+            ! videorate \
+            ! video/x-raw,framerate={fps}/1 \
+            ! x264enc \
+                tune=zerolatency \
+                speed-preset=ultrafast \
+                bitrate={bitrate} \
+            ! rtph264pay config-interval=1 mtu={mtu} \
+            ! udpsink host={host} port={port} sync=true"""
+        else:
+            pipeline_desc = f"videotestsrc ! video/x-raw,width=640,height=480 ! videoconvert ! videorate ! video/x-raw,framerate={fps}/1 ! fpsdisplaysink"
         return pipeline_desc
     
     def play(self):

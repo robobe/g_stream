@@ -1,5 +1,7 @@
 stream_node:
   ros__parameters:
+    port: 5000
+    host: "127.0.0.1"
     bitrate: 4000  # in kbps
     fps: 30
 
@@ -9,12 +11,12 @@ stream_node:
 
     low:
       fps: 5
-      bitrate: 10
+      bitrate: 500
 
     medium:
       fps: 10
-      bitrate: 10
+      bitrate: 500
 
     high:
       fps: 20
-      bitrate: 10
+      bitrate: 500

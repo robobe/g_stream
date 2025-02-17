@@ -71,7 +71,7 @@ class StreamHandlerNode(Node):
         self._init_services()
         # self.timer = self.create_timer(1.0, self.__timer_handler)
         # preset = self.get_parameter(PARAM_PRESET).value
-        # self.add_on_set_parameters_callback(self.parameters_handler)
+        self.add_on_set_parameters_callback(self.parameters_handler)
         self.play()
 
     def __timer_handler(self):
@@ -95,22 +95,26 @@ class StreamHandlerNode(Node):
     # region parameters
 
     def parameters_handler(self, params: List[Parameter]):
+        self.get_logger().info(f"---------------------------bb")
         success = True
-        
+        param_result = SetParametersResult()
         for param in params:
             try:
-                if param.name == PARAM_FPS:
-                    self.update_preset_data(PresetIndex.FPS, param.value)
-                    # self.get_logger().info(f"preset: {}")
+                if param.name == PARAM_PRESET:
+                    # throw exception on not valid value #TODO: think again for exception for login issue
+                    preset = Presets(param.value)
+                    
                 
 
                 success = True
 
             except Exception as err:
-                print(err)
+                self.get_logger().error(str(err))
                 self.get_logger().error("Failed to update parameter")
                 success = False
-        return SetParametersResult(successful=success)
+
+        param_result.successful = success
+        return param_result
 
     def _init_parameters(self):
         bitrate_descriptor = ParameterDescriptor(

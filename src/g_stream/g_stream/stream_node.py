@@ -48,6 +48,7 @@ PARAM_PORT = "port"
 PARAM_VBV = "vbv"
 PARAM_ARCH = "arch"
 PARAM_TEST_ENABLE = "test_enable"
+PARAM_RECEIVER_PIPE = "receiver_pipe"
 # end region
 
 NAME = "stream_node"
@@ -149,6 +150,8 @@ class StreamHandlerNode(Node):
         self.declare_parameter(PARAM_PORT, value=DEFAULT_PORT)
         self.declare_parameter(PARAM_ARCH, value=EncoderArch.CPU.value)
 
+        
+
         for group in ["low", "medium", "high"]:
             for item in ["fps", "bitrate"]:
 
@@ -232,22 +235,53 @@ class StreamHandlerNode(Node):
         if test_enable:
             pipe_header = "videotestsrc is-live=true ! video/x-raw, width=640, height=480, framerate=30/1, format=I420 "
         
-        if encoder_type == EncoderType.H264 and encoder_arch==EncoderArch.CPU:
-            self.get_logger().warning("encoder not support vbv argument")
+        if encoder_arch==EncoderArch.CPU:
+            if encoder_type == EncoderType.H264:
+                self.get_logger().warning("encoder not support vbv argument")
 
-            pipeline_desc = f"""{pipe_header}
-            ! videoconvert \
-            ! queue max-size-buffers=1 leaky=downstream \
-            ! videorate \
-            ! video/x-raw,framerate={fps}/1 \
-            ! x264enc \
-                tune=zerolatency \
-                speed-preset=ultrafast \
-                bitrate={bitrate} \
-            ! rtph264pay config-interval=1 mtu={mtu} \
-            ! udpsink host={host} port={port} sync=true"""
+                pipeline_desc = f"""{pipe_header}
+                ! videoconvert \
+                ! queue max-size-buffers=1 leaky=downstream \
+                ! videorate \
+                ! video/x-raw,framerate={fps}/1 \
+                ! x264enc \
+                    tune=zerolatency \
+                    speed-preset=ultrafast \
+                    bitrate={bitrate} \
+                ! rtph264pay config-interval=1 mtu={mtu} \
+                ! udpsink host={host} port={port} sync=true"""
+
+                receiver_pipe="""
+                gst-launch-1.0 udpsrc port=5000 ! application/x-rtp, encoding-name=H264, payload=96 ! rtpjitterbuffer latency=10 ! rtph264depay ! avdec_h264 ! videoconvert ! fpsdisplaysink sync=true
+                """
+            if encoder_type == EncoderType.H265:
+                self.get_logger().warning("encoder not support vbv argument")
+
+                pipeline_desc = f"""{pipe_header}
+                ! videoconvert \
+                ! queue max-size-buffers=1 leaky=downstream \
+                ! videorate \
+                ! video/x-raw,framerate={fps}/1 \
+                ! x265enc \
+                    tune=zerolatency \
+                    speed-preset=ultrafast \
+                    bitrate={bitrate} \
+                ! rtph265pay config-interval=1 mtu={mtu} \
+                ! udpsink host={host} port={port} sync=true"""
+
+                receiver_pipe="""
+                gst-launch-1.0 udpsrc port=5000 ! application/x-rtp, encoding-name=H265, payload=96 ! rtpjitterbuffer latency=10 ! rtph265depay ! avdec_h265 ! videoconvert ! fpsdisplaysink sync=true
+                """
+
         else:
             pipeline_desc = f"videotestsrc ! video/x-raw,width=640,height=480 ! videoconvert ! videorate ! video/x-raw,framerate={fps}/1 ! fpsdisplaysink"
+
+        if self.has_parameter(PARAM_RECEIVER_PIPE):
+            self.undeclare_parameter(PARAM_RECEIVER_PIPE)
+        desc = ParameterDescriptor(read_only=True)
+        self.declare_parameter(PARAM_RECEIVER_PIPE, value=receiver_pipe, descriptor=desc)
+        
+
         return pipeline_desc
     
     def play(self):

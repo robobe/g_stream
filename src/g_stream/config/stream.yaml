@@ -2,9 +2,9 @@ stream_node:
   ros__parameters:
     port: 5000
     host: "127.0.0.1"
-    bitrate: 4000  # in kbps
+    bitrate: 400  # in kbps
     fps: 30
-
+    encoder_type: "h265"
     preset: "low"
 
 

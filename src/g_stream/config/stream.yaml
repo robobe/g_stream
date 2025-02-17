@@ -4,10 +4,11 @@ stream_node:
     host: "127.0.0.1"
     bitrate: 400  # in kbps
     fps: 30
-    encoder_type: "h265"
+    encoder_type: "h264"
     preset: "low"
-
-
+    width: 640
+    height: 480
+    test_enable: false
 
     low:
       fps: 5

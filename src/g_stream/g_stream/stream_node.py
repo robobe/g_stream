@@ -27,11 +27,15 @@ from enum import Enum, IntEnum
 
 import minimal_pipe
 
+
+
 # region consts
 DEFAULT_FPS = 10
 DEFAULT_MTU = 1400
 DEFAULT_HOST = "127.0.0.1"
 DEFAULT_PORT = 5000
+DEFAULT_WIDTH = 640
+DEFAULT_HEIGHT = 480
 # endregion
 
 # region parameters
@@ -49,6 +53,8 @@ PARAM_VBV = "vbv"
 PARAM_ARCH = "arch"
 PARAM_TEST_ENABLE = "test_enable"
 PARAM_RECEIVER_PIPE = "receiver_pipe"
+PARAM_WIDTH = "width"
+PARAM_HEIGHT = "height"
 # end region
 
 NAME = "stream_node"
@@ -85,6 +91,7 @@ class StreamHandlerNode(Node):
         self.gst = None
         self._init_parameters()
         self._init_services()
+        self._init_subscribers()
         # self.timer = self.create_timer(1.0, self.__timer_handler)
         # preset = self.get_parameter(PARAM_PRESET).value
         self.add_on_set_parameters_callback(self.parameters_handler)
@@ -149,7 +156,8 @@ class StreamHandlerNode(Node):
         self.declare_parameter(PARAM_HOST, value=DEFAULT_HOST)
         self.declare_parameter(PARAM_PORT, value=DEFAULT_PORT)
         self.declare_parameter(PARAM_ARCH, value=EncoderArch.CPU.value)
-
+        self.declare_parameter(PARAM_WIDTH, value=DEFAULT_WIDTH)
+        self.declare_parameter(PARAM_HEIGHT, value=DEFAULT_HEIGHT)
         
 
         for group in ["low", "medium", "high"]:
@@ -166,7 +174,7 @@ class StreamHandlerNode(Node):
             CAMERA_TOPIC,
             self.image_handler,
             qos_profile=qos_profile_sensor_data,
-            callback_group=self.g,
+            callback_group=self.callback_group,
         )
     # endregion
 
@@ -210,7 +218,7 @@ class StreamHandlerNode(Node):
     # region subscribers
     def image_handler(self, msg: Image):
         frame = self.cv_br.imgmsg_to_cv2(msg, desired_encoding="bgr8")
-        # gst_handler.push_image(frame)
+        self.gst.push_image(frame)
     #endregion
 
     #endregion
@@ -230,10 +238,12 @@ class StreamHandlerNode(Node):
         port = self.get_parameter(PARAM_PORT).value
         host = self.get_parameter(PARAM_HOST).value
         test_enable = self.get_parameter(PARAM_TEST_ENABLE).value
+        width  = self.get_parameter(PARAM_WIDTH).value
+        height  = self.get_parameter(PARAM_HEIGHT).value
 
-        pipe_header = "appsrc name=src is-liver=true "
+        pipe_header = f"appsrc name=app_src  is-live=true format=GST_FORMAT_TIME ! video/x-raw,width={width},height={height},format=BGR,framerate=30/1 "
         if test_enable:
-            pipe_header = "videotestsrc is-live=true ! video/x-raw, width=640, height=480, framerate=30/1, format=I420 "
+            pipe_header = f"videotestsrc  name=app_src is-live=true ! video/x-raw, width={width}, height={height}, framerate=30/1, format=I420 "
         
         if encoder_arch==EncoderArch.CPU:
             if encoder_type == EncoderType.H264:
@@ -281,6 +291,8 @@ class StreamHandlerNode(Node):
         desc = ParameterDescriptor(read_only=True)
         self.declare_parameter(PARAM_RECEIVER_PIPE, value=receiver_pipe, descriptor=desc)
         
+        if minimal_pipe.SRC_ELEMENT not in pipeline_desc:
+            raise Exception("source element {SRC_ELEMENT} not found in pipe")
 
         return pipeline_desc
     

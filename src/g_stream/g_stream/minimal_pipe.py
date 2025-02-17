@@ -1,6 +1,7 @@
 import threading
 import time
 import gi
+import numpy as np
 
 gi.require_version("Gst", "1.0")
 from gi.repository import Gst, GLib
@@ -8,10 +9,14 @@ from gi.repository import Gst, GLib
 # Initialize GStreamer
 Gst.init(None)
 
+# region pipe name
+SRC_ELEMENT = "app_src"
+# endregion
 
 class GstPipelineThread:
     def __init__(self, pipeline_desc):
         self.pipeline = Gst.parse_launch(pipeline_desc)
+        self.app_src = self.pipeline.get_by_name("app_src")
         self.loop = GLib.MainLoop()
         self.running = False
         self.thread = None
@@ -66,6 +71,14 @@ class GstPipelineThread:
             err, debug = message.parse_error()
             print(f"Error: {err}, {debug}")
             self.stop()
+
+    def ndarray_to_gst_buffer(self, array: np.ndarray) -> Gst.Buffer:
+        """Converts numpy array to Gst.Buffer"""
+        return Gst.Buffer.new_wrapped(array.tobytes())
+
+    def push_image(self, frame):
+        if self.app_src:
+            self.app_src.emit("push-buffer", self.ndarray_to_gst_buffer(frame))
 
 
 # Example usage with a simple test video pipeline

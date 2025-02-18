@@ -1,26 +1,27 @@
 stream_node:
   ros__parameters:
     port: 5000
-    host: "10.0.0.1"
-    bitrate: 400  # in kbps
-    fps: 30
+    ip_address: "10.0.0.1"
     encoder_type: "h265"
     preset: "low"
     width: 640
     height: 480
     test_enable: true
-    arch: "nvidia"
+    hardware: "nvidia"
     low:
       fps: 5
-      bitrate: 500
-      iframeinterval: 30
+      bitrate: 200
+      iframe_interval: 5
+      vbv: 200
 
     medium:
-      fps: 10
-      bitrate: 500
-      iframeinterval: 30
+      fps: 9
+      bitrate: 350
+      iframe_interval: 9
+      vbv: 350
 
     high:
-      fps: 20
+      fps: 9
       bitrate: 500
-      iframeinterval: 30
+      iframe_interval: 9
+      vbv: 500

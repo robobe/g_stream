@@ -50,10 +50,10 @@ PARAM_PRESET = "preset"
 PARAM_PRESET_LOW = "preset_low"
 PARAM_PRESET_MEDIUM = "preset_medium"
 PARAM_PRESET_HIGH = "preset_high"
-PARAM_HOST = "host"
+PARAM_HOST = "ip_address"
 PARAM_PORT = "port"
 PARAM_VBV = "vbv"
-PARAM_ARCH = "arch"
+PARAM_HARDWARE = "hardware"
 PARAM_TEST_ENABLE = "test_enable"
 PARAM_RECEIVER_PIPE = "receiver_pipe"
 PARAM_WIDTH = "width"
@@ -69,8 +69,8 @@ SRV_PRESET = "set_preset"
 # end region
 
 # region helper class
-class EncoderArch(Enum):
-    CPU = "cpu"
+class EncoderHardware(Enum):
+    PC = "pc"
     NVIDIA = "nvidia"
 
 class Presets(Enum):
@@ -83,7 +83,8 @@ class Presets(Enum):
 class PresetsItems(Enum):
     BITRATE = "bitrate"
     FPS = "fps"
-    IFRAME = "iframeinterval"
+    IFRAME = "iframe_interval"
+    VBV = "vbv"
 
 # end region
 
@@ -133,9 +134,9 @@ class StreamHandlerNode(Node):
                     # throw exception on not valid value #TODO: think again for exception for login issue
                     _ = EncoderType(param.value)
 
-                if param.name == PARAM_ARCH:
+                if param.name == PARAM_HARDWARE:
                     # throw exception on not valid value #TODO: think again for exception for login issue
-                    _ = EncoderArch(param.value)
+                    _ = EncoderHardware(param.value)
 
                 self.get_logger().warning(f"Try to update {param.name} ")
                 success = True
@@ -157,6 +158,9 @@ class StreamHandlerNode(Node):
             return DEFAULT_BITRATE
         elif preset_item == PresetsItems.IFRAME:
             return DEFAULT_IFRAMEINTERVAL
+        elif preset_item == PresetsItems.VBV:
+            # same as bitrate
+            return DEFAULT_BITRATE
         else:
             self.get_logger().error("Wrong item {item} ")
         
@@ -168,7 +172,7 @@ class StreamHandlerNode(Node):
         self.declare_parameter(PARAM_ENCODER_TYPE, value=EncoderType.H264.value)
         self.declare_parameter(PARAM_HOST, value=DEFAULT_HOST)
         self.declare_parameter(PARAM_PORT, value=DEFAULT_PORT)
-        self.declare_parameter(PARAM_ARCH, value=EncoderArch.CPU.value)
+        self.declare_parameter(PARAM_HARDWARE, value=EncoderHardware.PC.value)
         self.declare_parameter(PARAM_WIDTH, value=DEFAULT_WIDTH)
         self.declare_parameter(PARAM_HEIGHT, value=DEFAULT_HEIGHT)
         
@@ -246,10 +250,10 @@ class StreamHandlerNode(Node):
         fps = self.get_parameter(f"{preset}.{PresetsItems.FPS.value}").value
         bitrate = self.get_parameter(f"{preset}.{PresetsItems.BITRATE.value}").value
         iframeinterval = self.get_parameter(f"{preset}.{PresetsItems.IFRAME.value}").value
+        vbv = self.get_parameter(f"{preset}.{PresetsItems.VBV.value}").value
 
         encoder_type = EncoderType(self.get_parameter(PARAM_ENCODER_TYPE).value)
-        encoder_arch = EncoderArch(self.get_parameter(PARAM_ARCH).value)
-        vbv = self.get_parameter(PARAM_VBV).value
+        encoder_hw = EncoderHardware(self.get_parameter(PARAM_HARDWARE).value)
         mtu = self.get_parameter(PARAM_MTU).value
         port = self.get_parameter(PARAM_PORT).value
         host = self.get_parameter(PARAM_HOST).value
@@ -261,7 +265,7 @@ class StreamHandlerNode(Node):
         if test_enable:
             pipe_header = f"videotestsrc  name=app_src is-live=true ! video/x-raw, width={width}, height={height}, framerate=30/1, format=I420 "
         
-        if encoder_arch==EncoderArch.CPU:
+        if encoder_hw==EncoderHardware.PC:
             if encoder_type == EncoderType.H264:
                 self.get_logger().warning("encoder not support vbv, iframeinterval argument")
 
@@ -303,7 +307,7 @@ class StreamHandlerNode(Node):
                 """
                 # endregion
 
-        if encoder_arch == EncoderArch.NVIDIA:
+        if encoder_hw == EncoderHardware.NVIDIA:
             if encoder_type == EncoderType.H264:
                 nvidia_bitrate = bitrate*1000
                 if vbv == DEFAULT_NOT_SET:

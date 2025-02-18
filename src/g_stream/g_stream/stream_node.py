@@ -137,6 +137,7 @@ class StreamHandlerNode(Node):
                     # throw exception on not valid value #TODO: think again for exception for login issue
                     _ = EncoderArch(param.value)
 
+                self.get_logger().warning(f"Try to update {param.name} ")
                 success = True
 
             except Exception as err:
@@ -360,7 +361,7 @@ class StreamHandlerNode(Node):
         if self.has_parameter(PARAM_RECEIVER_PIPE):
             self.undeclare_parameter(PARAM_RECEIVER_PIPE)
         desc = ParameterDescriptor(read_only=True)
-        self.declare_parameter(PARAM_RECEIVER_PIPE, value=receiver_pipe, descriptor=desc)
+        self.declare_parameter(PARAM_RECEIVER_PIPE, value=receiver_pipe)#, descriptor=desc)
         
         if minimal_pipe.SRC_ELEMENT not in pipeline_desc:
             self.get_logger().error("bad pipe ------------------")

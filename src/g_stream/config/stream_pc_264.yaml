@@ -13,11 +13,14 @@ stream_node:
     low:
       fps: 5
       bitrate: 500
+      iframeinterval: 30
 
     medium:
       fps: 10
       bitrate: 500
+      iframeinterval: 30
 
     high:
       fps: 20
       bitrate: 500
+      iframeinterval: 30

@@ -8,6 +8,7 @@ from std_srvs.srv import SetBool, Trigger
 from .rqt_demo import DemoWidget
 from rcl_interfaces.srv import SetParameters
 from rcl_interfaces.msg import Parameter, ParameterValue
+from functools import partial
 
 class DemoPlugin(Plugin):
     def __init__(self, context):
@@ -21,27 +22,38 @@ class DemoPlugin(Plugin):
         self.node = context.node if context.node else rclpy.create_node("my_rqt_plugin")
 
         # Create ROS 2 service client
-        self.client = self.node.create_client(SetBool, "my_service")
+        self.client = self.node.create_client(Trigger, "/stream_node/set_preset")
         self.param_set = self.node.create_client(SetParameters, '/stream_node/set_parameters')
         
         while not self.param_set.wait_for_service(timeout_sec=2.0):
             self.node.get_logger().info('Waiting for parameter service...')
 
-        self._widget.pushButton.clicked.connect(self.call_service)
+        self._widget.cmd_low_preset.clicked.connect(partial(self.call_service, "low"))
+        self._widget.cmd_medium_preset.clicked.connect(partial(self.call_service, "medium"))
+        self._widget.cmd_high_preset.clicked.connect(partial(self.call_service, "high"))
         
         context.add_widget(self._widget)
 
     
+    def force_preset(self):
+        request = Trigger.Request()
+        future = self.client.call_async(request)
+        rclpy.spin_until_future_complete(self.node, future)
 
-    def call_service(self):
+        if future.result() is not None:
+            self.node.get_logger().info(f"preset set success")
+        else:
+            self.node.get_logger().error('Failed set preset')
+
+    def call_service(self, preset):
         self.node.get_logger().info("Call service")
         request = SetParameters.Request()
-
+        self.node.get_logger().info(f"Try set preset {preset}")
         # Create parameter object
         param = Parameter()
         param.name = "preset"
         param.value = ParameterValue()
-        param.value.string_value = "high"
+        param.value.string_value = preset
         param.value.type = 4
 
         request.parameters.append(param)
@@ -51,6 +63,7 @@ class DemoPlugin(Plugin):
 
         if future.result() is not None:
             self.node.get_logger().info(f"Parameter update success")
+            self.force_preset()
         else:
             self.node.get_logger().error('Failed to update parameter')
 

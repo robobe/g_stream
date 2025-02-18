@@ -25,3 +25,5 @@ sshfs user@10.0.0.1:/home/user/workspaces/gst_stream_ws workspace
 ```bash title="nvidia"
 ros2 run g_stream stream_node.py --ros-args --params-file /home/user/workspace/src/g_stream/config/nvidia.yaml
 ```
+
+[to read](https://www.theconstruct.ai/how-to-manipulate-parameters-at-runtime-ros2-humble-python-tutorial/)

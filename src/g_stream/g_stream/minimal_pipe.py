@@ -17,6 +17,9 @@ class GstPipelineThread:
     def __init__(self, pipeline_desc):
         self.pipeline = Gst.parse_launch(pipeline_desc)
         self.app_src = self.pipeline.get_by_name("app_src")
+        if "videotestsrc" not in pipeline_desc:
+            self.app_src.set_property("emit-signals", True)
+            self.app_src.set_property("format", Gst.Format.TIME)
         self.loop = GLib.MainLoop()
         self.running = False
         self.thread = None
@@ -79,7 +82,7 @@ class GstPipelineThread:
     def push_image(self, frame):
         if self.app_src:
             self.app_src.emit("push-buffer", self.ndarray_to_gst_buffer(frame))
-
+# 
 
 # Example usage with a simple test video pipeline
 if __name__ == "__main__":

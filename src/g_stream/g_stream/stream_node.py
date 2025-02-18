@@ -60,10 +60,10 @@ PARAM_WIDTH = "width"
 PARAM_HEIGHT = "height"
 # end region
 
-NAME = "stream_node"
+NAME = "stream"
 
 # region topics name
-CAMERA_TOPIC = "/camera/image_raw"
+CAMERA_TOPIC = "/image_raw"
 START_STOP_SRV = "start_stop"
 SRV_PRESET = "set_preset"
 # end region
@@ -165,7 +165,7 @@ class StreamHandlerNode(Node):
             self.get_logger().error("Wrong item {item} ")
         
     def _init_parameters(self):
-        self.declare_parameter(PARAM_TEST_ENABLE, value=True)
+        self.declare_parameter(PARAM_TEST_ENABLE, value=False)
         self.declare_parameter(PARAM_VBV, value=DEFAULT_NOT_SET)
         self.declare_parameter(PARAM_PRESET, value=Presets.LOW.value)
         self.declare_parameter(PARAM_MTU, value=DEFAULT_MTU)
@@ -189,7 +189,7 @@ class StreamHandlerNode(Node):
 
         self.img_sub = self.create_subscription(
             Image,
-            CAMERA_TOPIC,
+            "/camera/image_raw", #self.build_topic_name(CAMERA_TOPIC),
             self.image_handler,
             qos_profile=qos_profile_sensor_data,
             callback_group=self.callback_group,
@@ -236,13 +236,17 @@ class StreamHandlerNode(Node):
     # region subscribers
     def image_handler(self, msg: Image):
         frame = self.cv_br.imgmsg_to_cv2(msg, desired_encoding="bgr8")
-        self.gst.push_image(frame)
+        try:
+            self.gst.push_image(frame)
+        except Exception as err:
+            self.get_logger().error(str(err))
+            self.get_logger().warning("Fail to push image")
     #endregion
 
     #endregion
     def build_topic_name(self, base_name):
         node_name = self.get_name()
-        return f"{node_name}/{base_name}"
+        return f"{node_name}/{base_name}".replace("//","/")
     
     def build_pipe(self):
         preset = self.get_parameter(PARAM_PRESET).value
@@ -257,13 +261,14 @@ class StreamHandlerNode(Node):
         mtu = self.get_parameter(PARAM_MTU).value
         port = self.get_parameter(PARAM_PORT).value
         host = self.get_parameter(PARAM_HOST).value
-        test_enable = self.get_parameter(PARAM_TEST_ENABLE).value
+        test_enable = bool(self.get_parameter(PARAM_TEST_ENABLE).value)
         width  = self.get_parameter(PARAM_WIDTH).value
         height  = self.get_parameter(PARAM_HEIGHT).value
 
         pipe_header = f"appsrc name=app_src  is-live=true format=GST_FORMAT_TIME ! video/x-raw,width={width},height={height},format=BGR,framerate=30/1 "
         if test_enable:
-            pipe_header = f"videotestsrc  name=app_src is-live=true ! video/x-raw, width={width}, height={height}, framerate=30/1, format=I420 "
+            self.get_logger().warning("Using gstreamer testsource")
+            pipe_header = f"videotestsrc  name=app_src is-live=true ! video/x-raw, width={width}, height={height}, framerate=30/1, format=I420  "
         
         if encoder_hw==EncoderHardware.PC:
             if encoder_type == EncoderType.H264:

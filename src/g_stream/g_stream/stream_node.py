@@ -58,7 +58,6 @@ PARAM_PRESET_MEDIUM = "preset_medium"
 PARAM_PRESET_HIGH = "preset_high"
 PARAM_HOST = "ip_address"
 PARAM_PORT = "port"
-PARAM_VBV = "vbv"
 PARAM_HARDWARE = "hardware"
 PARAM_TEST_ENABLE = "test_enable"
 PARAM_RECEIVER_PIPE = "receiver_pipe"
@@ -193,7 +192,6 @@ class StreamHandlerNode(Node):
         
     def _init_parameters(self):
         self.declare_parameter(PARAM_TEST_ENABLE, value=False)
-        self.declare_parameter(PARAM_VBV, value=DEFAULT_NOT_SET)
         self.declare_parameter(PARAM_PRESET, value=Presets.LOW.value)
         self.declare_parameter(PARAM_MTU, value=DEFAULT_MTU)
         self.declare_parameter(PARAM_ENCODER_TYPE, value=EncoderType.H264.value)

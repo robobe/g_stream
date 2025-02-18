@@ -37,6 +37,8 @@ DEFAULT_PORT = 5000
 DEFAULT_WIDTH = 640
 DEFAULT_HEIGHT = 480
 DEFAULT_NOT_SET = 0
+DEFAULT_BITRATE = 500
+DEFAULT_IFRAMEINTERVAL = 30
 # endregion
 
 # region parameters
@@ -76,10 +78,7 @@ class Presets(Enum):
     MEDIUM = "medium"
     HIGH = "high"
 
-class Presets(Enum):
-    LOW = "low"
-    MEDIUM = "medium"
-    HIGH = "high"
+
 
 class PresetsItems(Enum):
     BITRATE = "bitrate"
@@ -148,15 +147,19 @@ class StreamHandlerNode(Node):
         param_result.successful = success
         return param_result
 
+    def get_preset_default(self, preset_name, item):
+        self.get_logger().warning(f"Set default value for preset: {preset_name} - {item}")
+        preset_item = PresetsItems(item)
+        if preset_item == PresetsItems.FPS:
+            return DEFAULT_FPS
+        elif preset_item == PresetsItems.BITRATE:
+            return DEFAULT_BITRATE
+        elif preset_item == PresetsItems.IFRAME:
+            return DEFAULT_IFRAMEINTERVAL
+        else:
+            self.get_logger().error("Wrong item {item} ")
+        
     def _init_parameters(self):
-        bitrate_descriptor = ParameterDescriptor(
-            description="stream bitrate",
-            type=ParameterType.PARAMETER_INTEGER,
-            integer_range=[IntegerRange(from_value=100, to_value=700)],
-        )
-
-        #default_preset
-        # preset_descriptor = ParameterDescriptor(type=Presets)
         self.declare_parameter(PARAM_TEST_ENABLE, value=True)
         self.declare_parameter(PARAM_VBV, value=DEFAULT_NOT_SET)
         self.declare_parameter(PARAM_PRESET, value=Presets.LOW.value)
@@ -172,7 +175,7 @@ class StreamHandlerNode(Node):
         # decalre preset params for each 
         for group in Presets:
             for item in PresetsItems:
-                self.declare_parameter(f"{group.value}.{item.value}")
+                self.declare_parameter(f"{group.value}.{item.value}", value=self.get_preset_default(group.value, item.value))
 
     # endregion
 
@@ -239,9 +242,9 @@ class StreamHandlerNode(Node):
     def build_pipe(self):
         preset = self.get_parameter(PARAM_PRESET).value
         
-        fps = self.get_parameter(f"{preset}.fps").value
-        bitrate = self.get_parameter(f"{preset}.bitrate").value
-        iframeinterval = self.get_parameter(f"{preset}.iframeinterval").value
+        fps = self.get_parameter(f"{preset}.{PresetsItems.FPS.value}").value
+        bitrate = self.get_parameter(f"{preset}.{PresetsItems.BITRATE.value}").value
+        iframeinterval = self.get_parameter(f"{preset}.{PresetsItems.IFRAME.value}").value
 
         encoder_type = EncoderType(self.get_parameter(PARAM_ENCODER_TYPE).value)
         encoder_arch = EncoderArch(self.get_parameter(PARAM_ARCH).value)
@@ -274,8 +277,8 @@ class StreamHandlerNode(Node):
                 ! rtph264pay config-interval=1 mtu={mtu} \
                 ! udpsink host={host} port={port} sync=true"""
 
-                receiver_pipe="""
-                gst-launch-1.0 udpsrc port=5000 ! application/x-rtp, encoding-name=H264, payload=96 ! rtpjitterbuffer latency=10 ! rtph264depay ! avdec_h264 ! videoconvert ! fpsdisplaysink sync=true
+                receiver_pipe=f"""
+                gst-launch-1.0 udpsrc port={port} ! application/x-rtp, encoding-name=H264, payload=96 ! rtpjitterbuffer latency=10 ! rtph264depay ! avdec_h264 ! videoconvert ! fpsdisplaysink sync=true
                 """
                 #endregion
 
@@ -294,8 +297,8 @@ class StreamHandlerNode(Node):
                 ! rtph265pay config-interval=1 mtu={mtu} \
                 ! udpsink host={host} port={port} sync=true"""
 
-                receiver_pipe="""
-                gst-launch-1.0 udpsrc port=5000 ! application/x-rtp, encoding-name=H265, payload=96 ! rtpjitterbuffer latency=10 ! rtph265depay ! avdec_h265 ! videoconvert ! fpsdisplaysink sync=true
+                receiver_pipe=f"""
+                gst-launch-1.0 udpsrc port={port} ! application/x-rtp, encoding-name=H265, payload=96 ! rtpjitterbuffer latency=10 ! rtph265depay ! avdec_h265 ! videoconvert ! fpsdisplaysink sync=true
                 """
                 # endregion
 
@@ -322,8 +325,8 @@ class StreamHandlerNode(Node):
                 ! udpsink host={host} port={port} sync=true
                 """
 
-                receiver_pipe="""
-                gst-launch-1.0 udpsrc port=5000 ! application/x-rtp, encoding-name=H264, payload=96 ! rtpjitterbuffer latency=10 ! rtph264depay ! avdec_h264 ! videoconvert ! fpsdisplaysink sync=true
+                receiver_pipe=f"""
+                gst-launch-1.0 udpsrc port={port} ! application/x-rtp, encoding-name=H264, payload=96 ! rtpjitterbuffer latency=10 ! rtph264depay ! avdec_h264 ! videoconvert ! fpsdisplaysink sync=true
                 """
                 #endregion
             if encoder_type == EncoderType.H265:
@@ -348,20 +351,21 @@ class StreamHandlerNode(Node):
                 ! udpsink host={host} port={port} sync=true
                 """
 
-                receiver_pipe="""
-                gst-launch-1.0 udpsrc port=5000 ! application/x-rtp, encoding-name=H265, payload=96 ! rtpjitterbuffer latency=10 ! rtph265depay ! avdec_h265 ! videoconvert ! fpsdisplaysink sync=true
+                receiver_pipe=f"""
+                gst-launch-1.0 udpsrc port={port} ! application/x-rtp, encoding-name=H265, payload=96 ! rtpjitterbuffer latency=10 ! rtph265depay ! avdec_h265 ! videoconvert ! fpsdisplaysink sync=true
                 """
                 #endregion
 
-        else:
-            pipeline_desc = f"videotestsrc ! video/x-raw,width=640,height=480 ! videoconvert ! videorate ! video/x-raw,framerate={fps}/1 ! fpsdisplaysink"
-
+        
         if self.has_parameter(PARAM_RECEIVER_PIPE):
             self.undeclare_parameter(PARAM_RECEIVER_PIPE)
         desc = ParameterDescriptor(read_only=True)
         self.declare_parameter(PARAM_RECEIVER_PIPE, value=receiver_pipe, descriptor=desc)
         
         if minimal_pipe.SRC_ELEMENT not in pipeline_desc:
+            self.get_logger().error("bad pipe ------------------")
+            self.get_logger().error(pipeline_desc)
+
             raise Exception("source element {SRC_ELEMENT} not found in pipe")
 
         return pipeline_desc

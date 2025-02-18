@@ -14,13 +14,19 @@ from rcl_interfaces.msg import (
     ParameterType,
     SetParametersResult,
 )
+from diagnostic_updater import (
+    DiagnosticStatus,
+    DiagnosticStatusWrapper,
+    DiagnosticTask,
+    Updater,
+)
 from rclpy.callback_groups import ReentrantCallbackGroup
 from rclpy.executors import MultiThreadedExecutor
 from rclpy.parameter import Parameter
 from rclpy.qos import qos_profile_sensor_data, qos_profile_services_default
 from sensor_msgs.msg import Image
 from std_srvs.srv import SetBool, Trigger
-
+import os
 from typing import List
 # import stream_node_gst as gst_handler
 from enum import Enum, IntEnum
@@ -69,6 +75,17 @@ SRV_PRESET = "set_preset"
 # end region
 
 # region helper class
+class HeartbeatStatus(DiagnosticTask):
+    def __init__(self, name, pid):
+        super().__init__(name)
+        self.pid = pid
+
+    def run(self, stat: DiagnosticStatusWrapper):
+        stat.summary(DiagnosticStatus.OK, "Running")
+
+        stat.add("pid", str(self.pid))
+        return stat
+    
 class EncoderHardware(Enum):
     PC = "pc"
     NVIDIA = "nvidia"
@@ -103,6 +120,7 @@ class StreamHandlerNode(Node):
         self._init_parameters()
         self._init_services()
         self._init_subscribers()
+        self._init_diagnostic()
         # self.timer = self.create_timer(1.0, self.__timer_handler)
         # preset = self.get_parameter(PARAM_PRESET).value
         self.add_on_set_parameters_callback(self.parameters_handler)
@@ -111,6 +129,14 @@ class StreamHandlerNode(Node):
 
 
     # region init
+   
+    
+    def _init_diagnostic(self):
+        self.diagnostic_updater = Updater(self)
+        self.diagnostic_updater.setHardwareID(self.get_name())
+        self.hb_diagnostic = HeartbeatStatus("HB", os.getpid())
+        self.diagnostic_updater.add(self.hb_diagnostic)
+        
     def _init_services(self):
         self.start_stop_srv = self.create_service(SetBool, 
                             self.build_topic_name(START_STOP_SRV), 

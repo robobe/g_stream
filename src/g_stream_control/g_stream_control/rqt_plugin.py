@@ -23,7 +23,7 @@ class DemoPlugin(Plugin):
         self.node = context.node if context.node else rclpy.create_node("my_rqt_plugin")
 
         # Create ROS 2 service client
-        # self.client = self.node.create_client(Trigger, "/stream_node/set_preset")
+        self.start_stop_client = self.node.create_client(SetBool, "/stream/start_stop")
         # self.param_set = self.node.create_client(SetParameters, '/stream_node/set_parameters')
         self.preset_set = self.node.create_client(Preset, '/stream/set_preset')
         while not self.preset_set.wait_for_service(timeout_sec=2.0):
@@ -32,19 +32,22 @@ class DemoPlugin(Plugin):
         self._widget.cmd_low_preset.clicked.connect(partial(self.call_service, "low"))
         self._widget.cmd_medium_preset.clicked.connect(partial(self.call_service, "medium"))
         self._widget.cmd_high_preset.clicked.connect(partial(self.call_service, "high"))
+        self._widget.cmd_start_pipe.clicked.connect(partial(self.start_stop_service, True))
+        self._widget.cmd_stop_pipe.clicked.connect(partial(self.start_stop_service, False))
         
         context.add_widget(self._widget)
 
     
-    def force_preset(self):
-        request = Trigger.Request()
-        future = self.client.call_async(request)
+    def start_stop_service(self, state):
+        request = SetBool.Request()
+        request.data = state
+        future = self.start_stop_client.call_async(request)
         rclpy.spin_until_future_complete(self.node, future)
 
         if future.result() is not None:
-            self.node.get_logger().info(f"preset set success")
+            self.node.get_logger().info(f"start stop sucess")
         else:
-            self.node.get_logger().error('Failed set preset')
+            self.node.get_logger().error('Failed start/stop pipe')
 
     def call_service(self, preset):
         self.node.get_logger().info("Call service")

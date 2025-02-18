@@ -22,6 +22,22 @@
                     <height>251</height>
                 </rect>
             </property>
+            <layout class="QHBoxLayout" name="start_stop_group">
+                <item>
+                    <widget class="QPushButton" name="cmd_start_pipe">
+                        <property name="text">
+                            <string>start</string>
+                        </property>
+                    </widget>
+                </item>
+                <item>
+                    <widget class="QPushButton" name="cmd_stop_pipe">
+                        <property name="text">
+                            <string>stop</string>
+                        </property>
+                    </widget>
+                </item>
+            </layout>
             <layout class="QVBoxLayout" name="verticalLayout">
 
                 <item>

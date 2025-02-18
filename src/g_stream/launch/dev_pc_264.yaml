@@ -9,8 +9,8 @@ windows:
     panes:
       - shell_command: #
           - printf '\033]2;%s\033\\' 'source'
-          # - export GSCAM_CONFIG="videotestsrc ! video/x-raw,width=640,height=480,framerate=10/1 ! videoconvert"
-          # - ros2 run gscam gscam_node
+          - export GSCAM_CONFIG="videotestsrc pattern=ball ! video/x-raw,width=640,height=480,framerate=10/1 ! videoconvert"
+          - ros2 run gscam gscam_node
       - shell_command: #
           - printf '\033]2;%s\033\\' 'stream'
           - ros2 run g_stream stream_node.py --ros-args --params-file /workspace/src/g_stream/config/stream_pc_264.yaml

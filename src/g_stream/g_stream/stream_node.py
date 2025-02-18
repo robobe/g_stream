@@ -33,7 +33,7 @@ from enum import Enum, IntEnum
 
 import minimal_pipe
 from param_dump_manager import ParamDumpManager
-
+from g_stream_interface.srv import Preset
 
 # region consts
 DEFAULT_FPS = 10
@@ -141,7 +141,7 @@ class StreamHandlerNode(Node):
         self.start_stop_srv = self.create_service(SetBool, 
                             self.build_topic_name(START_STOP_SRV), 
                             self.start_stop_handler)
-        self.start_stop_srv = self.create_service(Trigger, 
+        self.preset_srv = self.create_service(Preset, 
                             self.build_topic_name(SRV_PRESET), 
                             self.set_preset_handler)
     # endregion
@@ -224,14 +224,14 @@ class StreamHandlerNode(Node):
     # region handlers
     # region services
     
-    def set_preset_handler(self, request: SetBool.Request, response: SetBool.Response):
+    def set_preset_handler(self, request: Preset.Request, response: Preset.Response):
         """
-        ros2 param get /stream_node preset
-        ros2 param set /stream_node preset high
-        ros2 param set /stream_node preset medium
-        ros2 param set /stream_node preset low
-        ros2 service call /stream_node/set_preset std_srvs/srv/Trigger "{}"
+        ros2 service call /stream/set_preset g_stream_interface/srv/Preset " {preset: 'high'} "
+        ros2 service call /stream/set_preset g_stream_interface/srv/Preset " {preset: 'low'} "
         """
+        self.set_parameters([
+            Parameter(PARAM_PRESET, value=request.preset)
+        ])
         self.get_logger().warning(f"--Restart pipe--")
         self.stop()
         time.sleep(1)

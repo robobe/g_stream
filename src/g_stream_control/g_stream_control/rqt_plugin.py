@@ -5,6 +5,7 @@ import rclpy
 from rclpy.node import Node
 from qt_gui.plugin import Plugin
 from std_srvs.srv import SetBool, Trigger
+from g_stream_interface.srv import Preset
 from .rqt_demo import DemoWidget
 from rcl_interfaces.srv import SetParameters
 from rcl_interfaces.msg import Parameter, ParameterValue
@@ -22,10 +23,10 @@ class DemoPlugin(Plugin):
         self.node = context.node if context.node else rclpy.create_node("my_rqt_plugin")
 
         # Create ROS 2 service client
-        self.client = self.node.create_client(Trigger, "/stream_node/set_preset")
-        self.param_set = self.node.create_client(SetParameters, '/stream_node/set_parameters')
-        
-        while not self.param_set.wait_for_service(timeout_sec=2.0):
+        # self.client = self.node.create_client(Trigger, "/stream_node/set_preset")
+        # self.param_set = self.node.create_client(SetParameters, '/stream_node/set_parameters')
+        self.preset_set = self.node.create_client(Preset, '/stream/set_preset')
+        while not self.preset_set.wait_for_service(timeout_sec=2.0):
             self.node.get_logger().info('Waiting for parameter service...')
 
         self._widget.cmd_low_preset.clicked.connect(partial(self.call_service, "low"))
@@ -47,25 +48,40 @@ class DemoPlugin(Plugin):
 
     def call_service(self, preset):
         self.node.get_logger().info("Call service")
-        request = SetParameters.Request()
+        request = Preset.Request()
         self.node.get_logger().info(f"Try set preset {preset}")
         # Create parameter object
-        param = Parameter()
-        param.name = "preset"
-        param.value = ParameterValue()
-        param.value.string_value = preset
-        param.value.type = 4
+        request.preset = preset
 
-        request.parameters.append(param)
-
-        future = self.param_set.call_async(request)
+        future = self.preset_set.call_async(request)
         rclpy.spin_until_future_complete(self.node, future)
 
         if future.result() is not None:
             self.node.get_logger().info(f"Parameter update success")
-            self.force_preset()
         else:
             self.node.get_logger().error('Failed to update parameter')
+
+    # def call_service(self, preset):
+    #     self.node.get_logger().info("Call service")
+    #     request = SetParameters.Request()
+    #     self.node.get_logger().info(f"Try set preset {preset}")
+    #     # Create parameter object
+    #     param = Parameter()
+    #     param.name = "preset"
+    #     param.value = ParameterValue()
+    #     param.value.string_value = preset
+    #     param.value.type = 4
+
+    #     request.parameters.append(param)
+
+    #     future = self.preset_set.call_async(request)
+    #     rclpy.spin_until_future_complete(self.node, future)
+
+    #     if future.result() is not None:
+    #         self.node.get_logger().info(f"Parameter update success")
+    #         self.force_preset()
+    #     else:
+    #         self.node.get_logger().error('Failed to update parameter')
 
 
 """

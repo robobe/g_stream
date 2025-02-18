@@ -36,11 +36,12 @@ DEFAULT_HOST = "127.0.0.1"
 DEFAULT_PORT = 5000
 DEFAULT_WIDTH = 640
 DEFAULT_HEIGHT = 480
+DEFAULT_NOT_SET = 0
 # endregion
 
 # region parameters
-PARAM_BITRATE = "bitrate"
-PARAM_FPS = "fps"
+
+
 PARAM_MTU = "mtu"
 PARAM_ENCODER_TYPE = "encoder_type"
 PARAM_PRESET = "preset"
@@ -74,6 +75,16 @@ class Presets(Enum):
     LOW = "low"
     MEDIUM = "medium"
     HIGH = "high"
+
+class Presets(Enum):
+    LOW = "low"
+    MEDIUM = "medium"
+    HIGH = "high"
+
+class PresetsItems(Enum):
+    BITRATE = "bitrate"
+    FPS = "fps"
+    IFRAME = "iframeinterval"
 
 # end region
 
@@ -143,16 +154,14 @@ class StreamHandlerNode(Node):
             type=ParameterType.PARAMETER_INTEGER,
             integer_range=[IntegerRange(from_value=100, to_value=700)],
         )
-        # self.declare_parameter(PARAM_BITRATE, value=300, descriptor=bitrate_descriptor)
 
         #default_preset
         # preset_descriptor = ParameterDescriptor(type=Presets)
         self.declare_parameter(PARAM_TEST_ENABLE, value=True)
-        self.declare_parameter(PARAM_VBV, value=DEFAULT_FPS)
+        self.declare_parameter(PARAM_VBV, value=DEFAULT_NOT_SET)
         self.declare_parameter(PARAM_PRESET, value=Presets.LOW.value)
         self.declare_parameter(PARAM_MTU, value=DEFAULT_MTU)
         self.declare_parameter(PARAM_ENCODER_TYPE, value=EncoderType.H264.value)
-        self.declare_parameter(PARAM_FPS,value=DEFAULT_FPS)
         self.declare_parameter(PARAM_HOST, value=DEFAULT_HOST)
         self.declare_parameter(PARAM_PORT, value=DEFAULT_PORT)
         self.declare_parameter(PARAM_ARCH, value=EncoderArch.CPU.value)
@@ -160,10 +169,11 @@ class StreamHandlerNode(Node):
         self.declare_parameter(PARAM_HEIGHT, value=DEFAULT_HEIGHT)
         
 
-        for group in ["low", "medium", "high"]:
-            for item in ["fps", "bitrate"]:
+        # decalre preset params for each 
+        for group in Presets:
+            for item in PresetsItems:
+                self.declare_parameter(f"{group.value}.{item.value}")
 
-                self.declare_parameter(f"{group}.{item}")
     # endregion
 
     # region subscribers
@@ -231,6 +241,8 @@ class StreamHandlerNode(Node):
         
         fps = self.get_parameter(f"{preset}.fps").value
         bitrate = self.get_parameter(f"{preset}.bitrate").value
+        iframeinterval = self.get_parameter(f"{preset}.iframeinterval").value
+
         encoder_type = EncoderType(self.get_parameter(PARAM_ENCODER_TYPE).value)
         encoder_arch = EncoderArch(self.get_parameter(PARAM_ARCH).value)
         vbv = self.get_parameter(PARAM_VBV).value
@@ -247,8 +259,9 @@ class StreamHandlerNode(Node):
         
         if encoder_arch==EncoderArch.CPU:
             if encoder_type == EncoderType.H264:
-                self.get_logger().warning("encoder not support vbv argument")
+                self.get_logger().warning("encoder not support vbv, iframeinterval argument")
 
+                #region pipe cpu h264
                 pipeline_desc = f"""{pipe_header}
                 ! videoconvert \
                 ! queue max-size-buffers=1 leaky=downstream \
@@ -264,9 +277,11 @@ class StreamHandlerNode(Node):
                 receiver_pipe="""
                 gst-launch-1.0 udpsrc port=5000 ! application/x-rtp, encoding-name=H264, payload=96 ! rtpjitterbuffer latency=10 ! rtph264depay ! avdec_h264 ! videoconvert ! fpsdisplaysink sync=true
                 """
+                #endregion
+
             if encoder_type == EncoderType.H265:
                 self.get_logger().warning("encoder not support vbv argument")
-
+                # region pipe cpu h265
                 pipeline_desc = f"""{pipe_header}
                 ! videoconvert \
                 ! queue max-size-buffers=1 leaky=downstream \
@@ -282,6 +297,61 @@ class StreamHandlerNode(Node):
                 receiver_pipe="""
                 gst-launch-1.0 udpsrc port=5000 ! application/x-rtp, encoding-name=H265, payload=96 ! rtpjitterbuffer latency=10 ! rtph265depay ! avdec_h265 ! videoconvert ! fpsdisplaysink sync=true
                 """
+                # endregion
+
+        if encoder_arch == EncoderArch.NVIDIA:
+            if encoder_type == EncoderType.H264:
+                nvidia_bitrate = bitrate*1000
+                if vbv == DEFAULT_NOT_SET:
+                    vbv = nvidia_bitrate
+                #region pipe nvidia h264
+                pipeline_desc = f"""{pipe_header}
+                ! videoconvert \
+                ! queue max-size-buffers=1 leaky=downstream \
+                ! videorate \
+                ! video/x-raw,framerate={fps}/1 \
+                ! nvvidconv \
+                ! nvv4l2h264enc bitrate={nvidia_bitrate} \
+                    maxperf-enable=true \
+                    preset-level=UltraFastPreset \
+                    control-rate=constant_bitrate \
+                    vbv-size={vbv} \
+                    iframeinterval={iframeinterval} \
+                ! h264parse \
+                ! rtph264pay config-interval=1 mtu={mtu} \
+                ! udpsink host={host} port={port} sync=true
+                """
+
+                receiver_pipe="""
+                gst-launch-1.0 udpsrc port=5000 ! application/x-rtp, encoding-name=H264, payload=96 ! rtpjitterbuffer latency=10 ! rtph264depay ! avdec_h264 ! videoconvert ! fpsdisplaysink sync=true
+                """
+                #endregion
+            if encoder_type == EncoderType.H265:
+                nvidia_bitrate = bitrate*1000
+                if vbv == DEFAULT_NOT_SET:
+                    vbv = nvidia_bitrate
+                #region pipe nvidia h265
+                pipeline_desc = f"""{pipe_header}
+                ! videoconvert \
+                ! queue max-size-buffers=1 leaky=downstream \
+                ! videorate \
+                ! video/x-raw,framerate={fps}/1 \
+                ! nvvidconv \
+                ! nvv4l2h265enc bitrate={nvidia_bitrate} \
+                    maxperf-enable=true \
+                    preset-level=UltraFastPreset \
+                    control-rate=constant_bitrate \
+                    vbv-size={vbv} \
+                    iframeinterval={iframeinterval} \
+                ! h265parse \
+                ! rtph265pay config-interval=1 mtu={mtu} \
+                ! udpsink host={host} port={port} sync=true
+                """
+
+                receiver_pipe="""
+                gst-launch-1.0 udpsrc port=5000 ! application/x-rtp, encoding-name=H265, payload=96 ! rtpjitterbuffer latency=10 ! rtph265depay ! avdec_h265 ! videoconvert ! fpsdisplaysink sync=true
+                """
+                #endregion
 
         else:
             pipeline_desc = f"videotestsrc ! video/x-raw,width=640,height=480 ! videoconvert ! videorate ! video/x-raw,framerate={fps}/1 ! fpsdisplaysink"

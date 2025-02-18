@@ -32,7 +32,7 @@ from typing import List
 from enum import Enum, IntEnum
 
 import minimal_pipe
-
+from param_dump_manager import ParamDumpManager
 
 
 # region consts
@@ -117,6 +117,7 @@ class StreamHandlerNode(Node):
         self.callback_group = ReentrantCallbackGroup()
         self.cv_br = CvBridge()
         self.gst = None
+        self.param_dump_manager = ParamDumpManager(self)
         self._init_parameters()
         self._init_services()
         self._init_subscribers()
@@ -136,7 +137,7 @@ class StreamHandlerNode(Node):
         self.diagnostic_updater.setHardwareID(self.get_name())
         self.hb_diagnostic = HeartbeatStatus("HB", os.getpid())
         self.diagnostic_updater.add(self.hb_diagnostic)
-        
+
     def _init_services(self):
         self.start_stop_srv = self.create_service(SetBool, 
                             self.build_topic_name(START_STOP_SRV), 

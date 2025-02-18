@@ -355,6 +355,7 @@ class StreamHandlerNode(Node):
                     control-rate=constant_bitrate \
                     vbv-size={vbv} \
                     iframeinterval={iframeinterval} \
+                    insert-sps-pps=true \
                 ! h264parse \
                 ! rtph264pay config-interval=1 mtu={mtu} \
                 ! udpsink host={host} port={port} sync=true
@@ -381,6 +382,7 @@ class StreamHandlerNode(Node):
                     control-rate=constant_bitrate \
                     vbv-size={vbv} \
                     iframeinterval={iframeinterval} \
+                    insert-sps-pps=true \
                 ! h265parse \
                 ! rtph265pay config-interval=1 mtu={mtu} \
                 ! udpsink host={host} port={port} sync=true

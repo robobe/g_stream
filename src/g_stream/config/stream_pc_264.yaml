@@ -1,28 +1,30 @@
 /**/stream:
   ros__parameters:
-    port: 5000
-    ip_address: "127.0.0.1"
-    encoder_type: "h264"
-    preset: "low"
-    width: 640
+    diagnostic_updater.period: 1.0
+    diagnostic_updater.use_fqn: false
+    encoder_type: h264
+    hardware: pc
     height: 480
+    high.bitrate: 500
+    high.fps: 9
+    high.iframe_interval: 9
+    high.vbv: 500
+    ip_address: 127.0.0.1
+    low.bitrate: 200
+    low.fps: 5
+    low.iframe_interval: 5
+    low.vbv: 200
+    medium.bitrate: 350
+    medium.fps: 9
+    medium.iframe_interval: 9
+    medium.vbv: 350
+    mtu: 1400
+    param_yaml_full_path: /workspace/src/g_stream/config/stream_pc_264.yaml
+    port: 5000
+    preset: medium
+    receiver_pipe: "\n                gst-launch-1.0 udpsrc port=5000 ! application/x-rtp,\
+      \ encoding-name=H264, payload=96 ! rtpjitterbuffer latency=10 ! rtph264depay\
+      \ ! avdec_h264 ! videoconvert ! fpsdisplaysink sync=true\n                "
     test_enable: true
-    hardware: "pc"
-
-    low:
-      fps: 5
-      bitrate: 200
-      iframe_interval: 5
-      vbv: 200
-
-    medium:
-      fps: 9
-      bitrate: 350
-      iframe_interval: 9
-      vbv: 350
-
-    high:
-      fps: 9
-      bitrate: 500
-      iframe_interval: 9
-      vbv: 500
+    use_sim_time: false
+    width: 640

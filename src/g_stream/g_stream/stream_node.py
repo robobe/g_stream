@@ -3,7 +3,7 @@
 # very importent
 # https://github.com/ros2/rclpy/issues/1149
 
-
+import sys
 import time
 import rclpy
 from rclpy.node import Node
@@ -32,7 +32,7 @@ from typing import List
 from enum import Enum, IntEnum
 
 import minimal_pipe
-from param_dump_manager import ParamDumpManager
+from param_dump_manager import ParamDumpManager, PARAM_LOCATION
 from g_stream_interface.srv import Preset
 
 # region consts
@@ -116,11 +116,12 @@ class StreamHandlerNode(Node):
         self.callback_group = ReentrantCallbackGroup()
         self.cv_br = CvBridge()
         self.gst = None
-        self.param_dump_manager = ParamDumpManager(self)
+        
         self._init_parameters()
         self._init_services()
         self._init_subscribers()
         self._init_diagnostic()
+        self.param_dump_manager = ParamDumpManager(self)
         # self.timer = self.create_timer(1.0, self.__timer_handler)
         # preset = self.get_parameter(PARAM_PRESET).value
         self.add_on_set_parameters_callback(self.parameters_handler)
@@ -200,9 +201,9 @@ class StreamHandlerNode(Node):
         self.declare_parameter(PARAM_HARDWARE, value=EncoderHardware.PC.value)
         self.declare_parameter(PARAM_WIDTH, value=DEFAULT_WIDTH)
         self.declare_parameter(PARAM_HEIGHT, value=DEFAULT_HEIGHT)
+        self.declare_parameter(PARAM_LOCATION, value="")
         
-
-        # decalre preset params for each 
+        # declare preset params for each 
         for group in Presets:
             for item in PresetsItems:
                 self.declare_parameter(f"{group.value}.{item.value}", value=self.get_preset_default(group.value, item.value))
@@ -417,6 +418,7 @@ class StreamHandlerNode(Node):
         self.gst.stop()
 
 def main(args=None):
+
     rclpy.init(args=args)
     node = StreamHandlerNode()
     executer = MultiThreadedExecutor()
@@ -435,4 +437,5 @@ def main(args=None):
         rclpy.shutdown()
 
 if __name__ == "__main__":
+    
     main()

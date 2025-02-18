@@ -202,6 +202,7 @@ class StreamHandlerNode(Node):
         self.declare_parameter(PARAM_WIDTH, value=DEFAULT_WIDTH)
         self.declare_parameter(PARAM_HEIGHT, value=DEFAULT_HEIGHT)
         self.declare_parameter(PARAM_LOCATION, value="")
+        self.declare_parameter(PARAM_RECEIVER_PIPE, value="")
         
         # declare preset params for each 
         for group in Presets:
@@ -395,11 +396,13 @@ class StreamHandlerNode(Node):
                 #endregion
 
         
-        if self.has_parameter(PARAM_RECEIVER_PIPE):
-            self.undeclare_parameter(PARAM_RECEIVER_PIPE)
-        desc = ParameterDescriptor(read_only=True)
-        self.declare_parameter(PARAM_RECEIVER_PIPE, value=receiver_pipe)#, descriptor=desc)
-        
+        # if self.has_parameter(PARAM_RECEIVER_PIPE):
+        #     self.undeclare_parameter(PARAM_RECEIVER_PIPE)
+        # desc = ParameterDescriptor(read_only=True)
+        #, descriptor=desc)
+        self.set_parameters([
+            Parameter(name=PARAM_RECEIVER_PIPE, value=receiver_pipe)
+        ])
         if minimal_pipe.SRC_ELEMENT not in pipeline_desc:
             self.get_logger().error("bad pipe ------------------")
             self.get_logger().error(pipeline_desc)

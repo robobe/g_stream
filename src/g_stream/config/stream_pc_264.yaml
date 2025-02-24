@@ -25,6 +25,7 @@
     receiver_pipe: "\n                gst-launch-1.0 udpsrc port=5000 ! application/x-rtp,\
       \ encoding-name=H264, payload=96 ! rtpjitterbuffer latency=10 ! rtph264depay\
       \ ! avdec_h264 ! videoconvert ! fpsdisplaysink sync=true\n                "
-    test_enable: true
+    test_enable: false
     use_sim_time: false
     width: 640
+    on_image_time_stamp: true

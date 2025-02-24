@@ -32,6 +32,7 @@ from typing import List
 from enum import Enum, IntEnum
 
 import minimal_pipe
+from bfid import draw_binary_on_image
 from param_dump_manager import ParamDumpManager, PARAM_LOCATION
 from g_stream_interface.srv import Preset
 
@@ -63,6 +64,7 @@ PARAM_TEST_ENABLE = "test_enable"
 PARAM_RECEIVER_PIPE = "receiver_pipe"
 PARAM_WIDTH = "width"
 PARAM_HEIGHT = "height"
+PARAM_ON_IMAGE_TIME_STAMP = "on_image_time_stamp"
 # end region
 
 NAME = "stream"
@@ -122,6 +124,7 @@ class StreamHandlerNode(Node):
         self._init_subscribers()
         self._init_diagnostic()
         self.param_dump_manager = ParamDumpManager(self)
+        self._on_image_time_stamp = self.get_parameter(PARAM_ON_IMAGE_TIME_STAMP).value
         # self.timer = self.create_timer(1.0, self.__timer_handler)
         # preset = self.get_parameter(PARAM_PRESET).value
         self.add_on_set_parameters_callback(self.parameters_handler)
@@ -203,6 +206,7 @@ class StreamHandlerNode(Node):
         self.declare_parameter(PARAM_HEIGHT, value=DEFAULT_HEIGHT)
         self.declare_parameter(PARAM_LOCATION, value="")
         self.declare_parameter(PARAM_RECEIVER_PIPE, value="")
+        self.declare_parameter(PARAM_ON_IMAGE_TIME_STAMP, value=True)
         
         # declare preset params for each 
         for group in Presets:
@@ -263,6 +267,8 @@ class StreamHandlerNode(Node):
     # region subscribers
     def image_handler(self, msg: Image):
         frame = self.cv_br.imgmsg_to_cv2(msg, desired_encoding="bgr8")
+        if self._on_image_time_stamp:
+            frame = draw_binary_on_image(frame, msg.header.stamp.sec, msg.header.stamp.nanosec, bit_size=3)
         try:
             self.gst.push_image(frame)
         except Exception as err:
@@ -271,6 +277,8 @@ class StreamHandlerNode(Node):
     #endregion
 
     #endregion
+    
+
     def build_topic_name(self, base_name):
         node_name = self.get_name()
         return f"{node_name}/{base_name}".replace("//","/")
@@ -291,6 +299,7 @@ class StreamHandlerNode(Node):
         test_enable = bool(self.get_parameter(PARAM_TEST_ENABLE).value)
         width  = self.get_parameter(PARAM_WIDTH).value
         height  = self.get_parameter(PARAM_HEIGHT).value
+        
 
         pipe_header = f"appsrc name=app_src  is-live=true format=GST_FORMAT_TIME ! video/x-raw,width={width},height={height},format=BGR,framerate=30/1 "
         if test_enable:
@@ -311,6 +320,7 @@ class StreamHandlerNode(Node):
                     tune=zerolatency \
                     speed-preset=ultrafast \
                     bitrate={bitrate} \
+                    key_int_max={fps} \
                 ! rtph264pay config-interval=1 mtu={mtu} \
                 ! udpsink host={host} port={port} sync=true"""
 
@@ -331,6 +341,7 @@ class StreamHandlerNode(Node):
                     tune=zerolatency \
                     speed-preset=ultrafast \
                     bitrate={bitrate} \
+                    key_int_max={fps} \
                 ! rtph265pay config-interval=1 mtu={mtu} \
                 ! udpsink host={host} port={port} sync=true"""
 

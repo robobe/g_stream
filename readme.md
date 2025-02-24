@@ -27,3 +27,9 @@ ros2 run g_stream stream_node.py --ros-args --params-file /home/user/workspace/s
 ```
 
 [to read](https://www.theconstruct.ai/how-to-manipulate-parameters-at-runtime-ros2-humble-python-tutorial/)
+
+
+```
+gst-launch-1.0 videotestsrc ! videoconvert ! timeoverlay ! autovideosink
+
+```

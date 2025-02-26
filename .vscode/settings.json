@@ -8,6 +8,36 @@
             "icon": "terminal-bash",
             "args": ["--rcfile", "/workspaces/env.sh"]
         }
+    },
+    "deploy.reloaded": {
+        "targets": [
+            {
+                "type": "zip",
+                "name": "workspaces as zip",
+                "description": "backup workspace as zip",
+                "open": false,
+                "dir": "workspace_bk"
+            }
+        ],
+        "packages": [
+            {
+                "name": "bk",
+                "description": "backup all workspace",
+                "files": [
+                    ".devcontainer/**",
+                    "**/*",
+                    ".vscode/task.json",
+                ],
+                "exclude": [
+                    "build/**",
+                    "install/**",
+                    "log/**",
+                    "**/__pycache__/**",
+                    "workspace_bk/**"
+
+                ],
+            }
+        ],
+        "ignoreSettingsFolder": false
     }
-    
 }

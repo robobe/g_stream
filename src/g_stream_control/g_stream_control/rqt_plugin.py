@@ -7,14 +7,21 @@ from qt_gui.plugin import Plugin
 from std_srvs.srv import SetBool, Trigger
 from g_stream_interface.srv import Preset
 from .rqt_demo import DemoWidget
-from rcl_interfaces.srv import SetParameters
+from rcl_interfaces.srv import SetParameters, GetParameters
 from rcl_interfaces.msg import Parameter, ParameterValue
 from functools import partial
+from PyQt5.QtCore import pyqtSignal, QObject
+from PyQt5.QtWidgets import QApplication
+
+PARAM_RECEIVER_PIPE = "receiver_pipe"
+
+class Worker(QObject):
+    receiver_pipe = pyqtSignal(str)
 
 class DemoPlugin(Plugin):
     def __init__(self, context):
         super(DemoPlugin, self).__init__(context)
-
+        self.worker = Worker()
         self._node = context.node
 
         # Give QObjects reasonable names
@@ -34,10 +41,46 @@ class DemoPlugin(Plugin):
         self._widget.cmd_high_preset.clicked.connect(partial(self.call_service, "high"))
         self._widget.cmd_start_pipe.clicked.connect(partial(self.start_stop_service, True))
         self._widget.cmd_stop_pipe.clicked.connect(partial(self.start_stop_service, False))
-        
-        context.add_widget(self._widget)
+        self._widget.cmdCopy.clicked.connect(self.copy_to_clipbard)
+        self.worker.receiver_pipe.connect(self.update_receiver_pipe)
 
-    
+        context.add_widget(self._widget)
+        self.get_parameters_service()
+
+    def copy_to_clipbard(self):
+        data = self._widget.txtReceivePipe.toPlainText()
+        clip = QApplication.clipboard()
+        clip.setText(data)
+
+    def update_receiver_pipe(self, txt: str):
+        # import threading
+        # self.node.get_logger().info(f'try to update: {threading.current_thread().getName()}')
+        self._widget.txtReceivePipe.insertPlainText(txt.strip())
+
+    def get_parameters_service(self):
+        """
+        Get receiver pipe parameter using service
+        """
+        self.node.get_logger().info("Call get parameters service")
+        get_parameters_client = self.node.create_client(GetParameters, '/stream/get_parameters')
+        while not get_parameters_client.wait_for_service(timeout_sec=2.0):
+            self.node.get_logger().info('Waiting for get parameters service...')
+
+        request = GetParameters.Request()
+        request.names = [PARAM_RECEIVER_PIPE]
+
+        future = get_parameters_client.call_async(request)
+        rclpy.spin_until_future_complete(self.node, future)
+
+        if future.result() is not None:
+            preset_value = future.result().values[0].string_value
+            self.worker.receiver_pipe.emit(preset_value)
+            # self._widget.txtReceivePipe.insertPlainText(preset_value)
+            self.node.get_logger().info(f"Get parameters success: {preset_value}")
+        else:
+            self.node.get_logger().error('Failed to get parameters')
+
+
     def start_stop_service(self, state):
         request = SetBool.Request()
         request.data = state

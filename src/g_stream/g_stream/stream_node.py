@@ -65,6 +65,7 @@ PARAM_RECEIVER_PIPE = "receiver_pipe"
 PARAM_WIDTH = "width"
 PARAM_HEIGHT = "height"
 PARAM_ON_IMAGE_TIME_STAMP = "on_image_time_stamp"
+PARAM_STATUS = "status"
 # end region
 
 NAME = "stream"
@@ -207,7 +208,7 @@ class StreamHandlerNode(Node):
         self.declare_parameter(PARAM_LOCATION, value="")
         self.declare_parameter(PARAM_RECEIVER_PIPE, value="")
         self.declare_parameter(PARAM_ON_IMAGE_TIME_STAMP, value=True)
-        
+        self.declare_parameter(PARAM_STATUS, "")
         # declare preset params for each 
         for group in Presets:
             for item in PresetsItems:
@@ -422,10 +423,16 @@ class StreamHandlerNode(Node):
 
         return pipeline_desc
     
+    def state_changed_handler(self, state):
+        self.get_logger().info("--------- state change")
+        print(state.value_name)
+        self.set_parameters([Parameter(PARAM_STATUS, Parameter.Type.STRING, state.value_name)])
+
     def play(self):
         pipe = self.build_pipe()
         self.get_logger().info(pipe)
         self.gst = minimal_pipe.GstPipelineThread(pipe)
+        self.gst.on_state_changed += self.state_changed_handler
         self.gst.start()
 
     def stop(self):

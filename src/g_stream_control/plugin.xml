@@ -1,15 +1,15 @@
 <library path="src">
     <class name="demo" type="g_stream_control.rqt_plugin.DemoPlugin" base_class_type="rqt_gui_py::Plugin">
       <description>
-        Demo rqt plugin
+        G Stream controller
       </description>
       <qtgui>
         <group>
-          <label>Demo</label>
+          <label>g stream controller</label>
         </group>
-        <label>simple demo plugin</label>
+        <label>g_stream controller</label>
         <icon type="theme">system-help</icon>
-        <statustip>Simple demo plugin.</statustip>
+        <statustip>Control g_stream presets.</statustip>
       </qtgui>
     </class>
   </library>

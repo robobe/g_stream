@@ -14,9 +14,12 @@ from PyQt5.QtCore import pyqtSignal, QObject
 from PyQt5.QtWidgets import QApplication
 
 PARAM_RECEIVER_PIPE = "receiver_pipe"
+PARAM_PRESET = "preset"
+
 
 class Worker(QObject):
     receiver_pipe = pyqtSignal(str)
+    preset = pyqtSignal(str)
 
 class DemoPlugin(Plugin):
     def __init__(self, context):
@@ -43,6 +46,7 @@ class DemoPlugin(Plugin):
         self._widget.cmd_stop_pipe.clicked.connect(partial(self.start_stop_service, False))
         self._widget.cmdCopy.clicked.connect(self.copy_to_clipbard)
         self.worker.receiver_pipe.connect(self.update_receiver_pipe)
+        self.worker.preset.connect(self.update_select_preset)
 
         context.add_widget(self._widget)
         self.get_parameters_service()
@@ -55,11 +59,26 @@ class DemoPlugin(Plugin):
     def update_receiver_pipe(self, txt: str):
         # import threading
         # self.node.get_logger().info(f'try to update: {threading.current_thread().getName()}')
-        self._widget.txtReceivePipe.insertPlainText(txt.strip())
+        self._widget.txtReceivePipe.setPlainText(txt.strip())
+
+    def update_select_preset(self, preset: str):
+        """
+        update preset button from parameter
+        """
+        self._widget.cmd_low_preset.setStyleSheet("")
+        self._widget.cmd_medium_preset.setStyleSheet("")
+        self._widget.cmd_high_preset.setStyleSheet("")
+
+        if preset == "low":
+            self._widget.cmd_low_preset.setStyleSheet("background-color: green;")
+        elif preset == "medium":
+            self._widget.cmd_medium_preset.setStyleSheet("background-color: green;")
+        else:
+            self._widget.cmd_high_preset.setStyleSheet("background-color: green;")
 
     def get_parameters_service(self):
         """
-        Get receiver pipe parameter using service
+        Get receiver pipe and preset parameter using service
         """
         self.node.get_logger().info("Call get parameters service")
         get_parameters_client = self.node.create_client(GetParameters, '/stream/get_parameters')
@@ -67,16 +86,19 @@ class DemoPlugin(Plugin):
             self.node.get_logger().info('Waiting for get parameters service...')
 
         request = GetParameters.Request()
-        request.names = [PARAM_RECEIVER_PIPE]
+        request.names = [PARAM_RECEIVER_PIPE, PARAM_PRESET]
 
         future = get_parameters_client.call_async(request)
         rclpy.spin_until_future_complete(self.node, future)
 
         if future.result() is not None:
-            preset_value = future.result().values[0].string_value
-            self.worker.receiver_pipe.emit(preset_value)
-            # self._widget.txtReceivePipe.insertPlainText(preset_value)
-            self.node.get_logger().info(f"Get parameters success: {preset_value}")
+            receiver_pipe = future.result().values[0].string_value
+            self.worker.receiver_pipe.emit(receiver_pipe)
+            self.node.get_logger().info(f"Get parameters success: {receiver_pipe}")
+
+            preset = future.result().values[1].string_value
+            self.worker.preset.emit(preset)
+            
         else:
             self.node.get_logger().error('Failed to get parameters')
 
@@ -104,6 +126,7 @@ class DemoPlugin(Plugin):
 
         if future.result() is not None:
             self.node.get_logger().info(f"Parameter update success")
+            self.get_parameters_service()
         else:
             self.node.get_logger().error('Failed to update parameter')
 

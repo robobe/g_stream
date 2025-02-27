@@ -4,3 +4,4 @@
 - [ ] Add FID to rtp header
 - [X] Add service that get string as preset name , replace the set parameter and trigger service
 - [ ] fix gui layout
+- [ ] check again pyuic5 (pip install pyqt5-tools)

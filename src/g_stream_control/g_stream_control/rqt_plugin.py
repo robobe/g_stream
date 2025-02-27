@@ -11,11 +11,13 @@ from rcl_interfaces.srv import SetParameters, GetParameters
 from rcl_interfaces.msg import Parameter, ParameterValue
 from functools import partial
 from PyQt5.QtCore import pyqtSignal, QObject
-from PyQt5.QtWidgets import QApplication
+from PyQt5.QtWidgets import QApplication, QPushButton
 
 PARAM_RECEIVER_PIPE = "receiver_pipe"
 PARAM_PRESET = "preset"
 PARAM_STATUS = "status"
+
+CONNECTION_RETRY = 3
 
 class Worker(QObject):
     receiver_pipe = pyqtSignal(str)
@@ -41,33 +43,44 @@ class DemoPlugin(Plugin):
         self._widget.laError.setStyleSheet("color: rgb(255,0,0);")
         self._init_error_label("")
 
-        self.wait_for_service()
+        connection_ok = self.wait_for_service()
 
-       
-        self._widget.cmd_low_preset.clicked.connect(partial(self.call_service, "low"))
-        self._widget.cmd_medium_preset.clicked.connect(partial(self.call_service, "medium"))
-        self._widget.cmd_high_preset.clicked.connect(partial(self.call_service, "high"))
-        self._widget.cmd_start_pipe.clicked.connect(partial(self.start_stop_service, True))
-        self._widget.cmd_stop_pipe.clicked.connect(partial(self.start_stop_service, False))
-        self._widget.cmdCopy.clicked.connect(self.copy_to_clipbard)
-        self.worker.receiver_pipe.connect(self.update_receiver_pipe)
-        self.worker.preset.connect(self.update_select_preset)
-        self.worker.pipe_state.connect(self.update_pipe_state)
+        if connection_ok:
+            self._widget.cmd_low_preset.clicked.connect(partial(self.call_service, "low"))
+            self._widget.cmd_medium_preset.clicked.connect(partial(self.call_service, "medium"))
+            self._widget.cmd_high_preset.clicked.connect(partial(self.call_service, "high"))
+            self._widget.cmd_start_pipe.clicked.connect(partial(self.start_stop_service, True))
+            self._widget.cmd_stop_pipe.clicked.connect(partial(self.start_stop_service, False))
+            self._widget.cmdCopy.clicked.connect(self.copy_to_clipbard)
+            self.worker.receiver_pipe.connect(self.update_receiver_pipe)
+            self.worker.preset.connect(self.update_select_preset)
+            self.worker.pipe_state.connect(self.update_pipe_state)
 
+            
+            self.load_parameters()
         context.add_widget(self._widget)
-        self.load_parameters()
 
     def wait_for_service(self):
         counter = 0
+        success = False
         while not self.preset_set.wait_for_service(timeout_sec=2.0):
             self.node.get_logger().info('Waiting for parameter service...')
             counter+=1
-            if counter > 2:
-                self.node.get_logger().info("error, refresh to try again")
+            if counter > CONNECTION_RETRY:
+                self.node.get_logger().error("error, refresh to try again")
                 self._init_error_label("Connection failed")
+                self._buttons_control(False)
                 break
         else:
-            print("fff")
+            success = True
+            self._buttons_control(True)
+            self.node.get_logger().info("connection successful")
+
+        return success
+
+    def _buttons_control(self, state: bool):
+        for button in self._widget.findChildren(QPushButton):
+            button.setEnabled(state)
 
     def _init_error_label(self, message):
         self._widget.laError.setText(message)

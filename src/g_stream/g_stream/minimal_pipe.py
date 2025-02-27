@@ -2,6 +2,7 @@ import threading
 import time
 import gi
 import numpy as np
+from g_stream import Event
 
 gi.require_version("Gst", "1.0")
 from gi.repository import Gst, GLib
@@ -23,6 +24,8 @@ class GstPipelineThread:
         self.loop = GLib.MainLoop()
         self.running = False
         self.thread = None
+        self.pipe_state = None
+        self.on_state_changed = Event()
 
     def start(self):
         """Starts the pipeline in a separate thread"""
@@ -39,7 +42,6 @@ class GstPipelineThread:
         bus = self.pipeline.get_bus()
         bus.add_signal_watch()
         bus.connect("message", self._on_message)
-
         self.pipeline.set_state(Gst.State.PLAYING)
         try:
             self.loop.run()  # Start the GMainLoop
@@ -55,7 +57,7 @@ class GstPipelineThread:
         if not self.running:
             print("Pipeline is not running.")
             return
-
+        self.pipeline.set_state(Gst.State.NULL)
         self.running = False
         self.loop.quit()  # Stop the GMainLoop
 
@@ -74,6 +76,10 @@ class GstPipelineThread:
             err, debug = message.parse_error()
             print(f"Error: {err}, {debug}")
             self.stop()
+        elif msg_type == Gst.MessageType.STATE_CHANGED:
+            old_state, self.pipe_state, pending = message.parse_state_changed()
+            print(self.pipe_state)
+            self.on_state_changed.fire(self.pipe_state)
 
     def ndarray_to_gst_buffer(self, array: np.ndarray) -> Gst.Buffer:
         """Converts numpy array to Gst.Buffer"""

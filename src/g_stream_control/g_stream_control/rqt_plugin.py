@@ -15,17 +15,19 @@ from PyQt5.QtWidgets import QApplication
 
 PARAM_RECEIVER_PIPE = "receiver_pipe"
 PARAM_PRESET = "preset"
-
+PARAM_STATUS = "status"
 
 class Worker(QObject):
     receiver_pipe = pyqtSignal(str)
     preset = pyqtSignal(str)
+    pipe_state = pyqtSignal(str)
 
 class DemoPlugin(Plugin):
     def __init__(self, context):
         super(DemoPlugin, self).__init__(context)
         self.worker = Worker()
         self._node = context.node
+        # print(dir(self))
 
         # Give QObjects reasonable names
         self.setObjectName('RQTDemo')
@@ -36,9 +38,12 @@ class DemoPlugin(Plugin):
         self.start_stop_client = self.node.create_client(SetBool, "/stream/start_stop")
         # self.param_set = self.node.create_client(SetParameters, '/stream_node/set_parameters')
         self.preset_set = self.node.create_client(Preset, '/stream/set_preset')
-        while not self.preset_set.wait_for_service(timeout_sec=2.0):
-            self.node.get_logger().info('Waiting for parameter service...')
+        self._widget.laError.setStyleSheet("color: rgb(255,0,0);")
+        self._init_error_label("")
 
+        self.wait_for_service()
+
+       
         self._widget.cmd_low_preset.clicked.connect(partial(self.call_service, "low"))
         self._widget.cmd_medium_preset.clicked.connect(partial(self.call_service, "medium"))
         self._widget.cmd_high_preset.clicked.connect(partial(self.call_service, "high"))
@@ -47,9 +52,25 @@ class DemoPlugin(Plugin):
         self._widget.cmdCopy.clicked.connect(self.copy_to_clipbard)
         self.worker.receiver_pipe.connect(self.update_receiver_pipe)
         self.worker.preset.connect(self.update_select_preset)
+        self.worker.pipe_state.connect(self.update_pipe_state)
 
         context.add_widget(self._widget)
-        self.get_parameters_service()
+        self.load_parameters()
+
+    def wait_for_service(self):
+        counter = 0
+        while not self.preset_set.wait_for_service(timeout_sec=2.0):
+            self.node.get_logger().info('Waiting for parameter service...')
+            counter+=1
+            if counter > 2:
+                self.node.get_logger().info("error, refresh to try again")
+                self._init_error_label("Connection failed")
+                break
+        else:
+            print("fff")
+
+    def _init_error_label(self, message):
+        self._widget.laError.setText(message)
 
     def copy_to_clipbard(self):
         data = self._widget.txtReceivePipe.toPlainText()
@@ -57,9 +78,17 @@ class DemoPlugin(Plugin):
         clip.setText(data)
 
     def update_receiver_pipe(self, txt: str):
-        # import threading
-        # self.node.get_logger().info(f'try to update: {threading.current_thread().getName()}')
         self._widget.txtReceivePipe.setPlainText(txt.strip())
+
+    def update_pipe_state(self, state: str) -> None:
+        self._widget.cmd_start_pipe.setStyleSheet("")
+        self._widget.cmd_stop_pipe.setStyleSheet("")
+
+        if state == "GST_STATE_PLAYING" or state == "GST_STATE_READY":
+            self._widget.cmd_start_pipe.setStyleSheet("background-color: green;")
+        else:
+            self._widget.cmd_start_pipe.setStyleSheet("background-color: red;")
+
 
     def update_select_preset(self, preset: str):
         """
@@ -76,17 +105,17 @@ class DemoPlugin(Plugin):
         else:
             self._widget.cmd_high_preset.setStyleSheet("background-color: green;")
 
-    def get_parameters_service(self):
+    def load_parameters(self):
         """
         Get receiver pipe and preset parameter using service
         """
         self.node.get_logger().info("Call get parameters service")
         get_parameters_client = self.node.create_client(GetParameters, '/stream/get_parameters')
-        while not get_parameters_client.wait_for_service(timeout_sec=2.0):
-            self.node.get_logger().info('Waiting for get parameters service...')
+        # while not get_parameters_client.wait_for_service(timeout_sec=2.0):
+        #     self.node.get_logger().info('Waiting for get parameters service...')
 
         request = GetParameters.Request()
-        request.names = [PARAM_RECEIVER_PIPE, PARAM_PRESET]
+        request.names = [PARAM_RECEIVER_PIPE, PARAM_PRESET, PARAM_STATUS]
 
         future = get_parameters_client.call_async(request)
         rclpy.spin_until_future_complete(self.node, future)
@@ -98,7 +127,10 @@ class DemoPlugin(Plugin):
 
             preset = future.result().values[1].string_value
             self.worker.preset.emit(preset)
-            
+
+            status = future.result().values[2].string_value
+            self.node.get_logger().warning(f"params status: {status}")
+            self.worker.pipe_state.emit(status)
         else:
             self.node.get_logger().error('Failed to get parameters')
 
@@ -113,6 +145,7 @@ class DemoPlugin(Plugin):
             self.node.get_logger().info(f"start stop sucess")
         else:
             self.node.get_logger().error('Failed start/stop pipe')
+        self.load_parameters()
 
     def call_service(self, preset):
         self.node.get_logger().info("Call service")
@@ -126,31 +159,14 @@ class DemoPlugin(Plugin):
 
         if future.result() is not None:
             self.node.get_logger().info(f"Parameter update success")
-            self.get_parameters_service()
+            self.load_parameters()
         else:
             self.node.get_logger().error('Failed to update parameter')
 
-    # def call_service(self, preset):
-    #     self.node.get_logger().info("Call service")
-    #     request = SetParameters.Request()
-    #     self.node.get_logger().info(f"Try set preset {preset}")
-    #     # Create parameter object
-    #     param = Parameter()
-    #     param.name = "preset"
-    #     param.value = ParameterValue()
-    #     param.value.string_value = preset
-    #     param.value.type = 4
+    def refresh_plugin(self):
+        self.node.get_logger().info("refresh button click")
+        
 
-    #     request.parameters.append(param)
-
-    #     future = self.preset_set.call_async(request)
-    #     rclpy.spin_until_future_complete(self.node, future)
-
-    #     if future.result() is not None:
-    #         self.node.get_logger().info(f"Parameter update success")
-    #         self.force_preset()
-    #     else:
-    #         self.node.get_logger().error('Failed to update parameter')
 
 
 """

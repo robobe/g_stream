@@ -3,10 +3,24 @@ from rclpy.node import Node
 import os
 from pathlib import Path
 import yaml
+from rclpy.node import Node
+from rclpy.parameter import Parameter
 
 TOPIC = "param_dump"
 PARAM_LOCATION = "param_yaml_full_path"
 # ros2 service call /stream/param_dump std_srvs/srv/Trigger "{}"
+
+def param_loader(node: Node, path: str):
+    if not Path(path).exists():
+        return False
+    
+    with open(path, 'r') as f:
+        params = yaml.safe_load(f)
+
+    for param, value  in params.items():
+        node.declare_parameter(param, value)
+
+    print("888888888888888888888888888888888888888888888888888888888888888888")
 
 class ParamDumpManager():
     def __init__(self, node):

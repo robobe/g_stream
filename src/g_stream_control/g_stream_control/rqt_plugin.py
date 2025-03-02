@@ -38,6 +38,7 @@ class DemoPlugin(Plugin):
 
         # Create ROS 2 service client
         self.start_stop_client = self.node.create_client(SetBool, "/stream/start_stop")
+        self.dump = self.node.create_client(Trigger, "/stream/dump")
         # self.param_set = self.node.create_client(SetParameters, '/stream_node/set_parameters')
         self.preset_set = self.node.create_client(Preset, '/stream/set_preset')
         self._widget.laError.setStyleSheet("color: rgb(255,0,0);")
@@ -51,6 +52,7 @@ class DemoPlugin(Plugin):
             self._widget.cmd_high_preset.clicked.connect(partial(self.call_service, "high"))
             self._widget.cmd_start_pipe.clicked.connect(partial(self.start_stop_service, True))
             self._widget.cmd_stop_pipe.clicked.connect(partial(self.start_stop_service, False))
+            self._widget.cmdDump.clicked.connect(self.dump_parameters_to_vehicle)
             self._widget.cmdCopy.clicked.connect(self.copy_to_clipbard)
             self.worker.receiver_pipe.connect(self.update_receiver_pipe)
             self.worker.preset.connect(self.update_select_preset)
@@ -147,6 +149,16 @@ class DemoPlugin(Plugin):
         else:
             self.node.get_logger().error('Failed to get parameters')
 
+
+    def dump_parameters_to_vehicle(self):
+        request = Trigger.Request()
+        future = self.dump.call_async(request)
+        rclpy.spin_until_future_complete(self.node, future)
+
+        if future.result() is not None:
+            self.node.get_logger().info(f"dump to vehicle success")
+        else:
+            self.node.get_logger().error('Failed to dump')
 
     def start_stop_service(self, state):
         request = SetBool.Request()

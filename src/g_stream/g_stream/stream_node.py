@@ -126,7 +126,7 @@ class StreamHandlerNode(Node):
         self._init_services()
         self._init_subscribers()
         self._init_diagnostic()
-        self.param_dump_manager = ParameterManagerEx(self)
+        self.param_dump_manager = ParameterManagerEx(self, self.get_fully_qualified_name())
         self._on_image_time_stamp = self.get_parameter(PARAM_ON_IMAGE_TIME_STAMP).value
         # self.timer = self.create_timer(1.0, self.__timer_handler)
         # preset = self.get_parameter(PARAM_PRESET).value

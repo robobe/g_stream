@@ -25,7 +25,7 @@ from rclpy.executors import MultiThreadedExecutor
 from rclpy.parameter import Parameter
 from rclpy.qos import qos_profile_sensor_data, qos_profile_services_default
 from sensor_msgs.msg import Image
-from std_srvs.srv import SetBool, Trigger
+from std_srvs.srv import SetBool
 import os
 from typing import List
 # import stream_node_gst as gst_handler
@@ -33,8 +33,9 @@ from enum import Enum, IntEnum
 
 import minimal_pipe
 from bfid import draw_binary_on_image
-from param_dump_manager import ParamDumpManager, PARAM_LOCATION
+# from param_dump_manager import ParamDumpManager, PARAM_LOCATION
 from g_stream_interface.srv import Preset
+from parameters_manager_ex import ParameterManagerEx
 
 # region consts
 DEFAULT_FPS = 10
@@ -66,6 +67,7 @@ PARAM_WIDTH = "width"
 PARAM_HEIGHT = "height"
 PARAM_ON_IMAGE_TIME_STAMP = "on_image_time_stamp"
 PARAM_STATUS = "status"
+PARAM_LOCATION = "param_yaml_full_path"
 # end region
 
 NAME = "stream"
@@ -124,7 +126,7 @@ class StreamHandlerNode(Node):
         self._init_services()
         self._init_subscribers()
         self._init_diagnostic()
-        self.param_dump_manager = ParamDumpManager(self)
+        self.param_dump_manager = ParameterManagerEx(self)
         self._on_image_time_stamp = self.get_parameter(PARAM_ON_IMAGE_TIME_STAMP).value
         # self.timer = self.create_timer(1.0, self.__timer_handler)
         # preset = self.get_parameter(PARAM_PRESET).value

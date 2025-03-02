@@ -1,6 +1,7 @@
 {
     "python.analysis.extraPaths": [
-        "/home/user/.local/lib/python3.10/site-packages"
+        "/home/user/.local/lib/python3.10/site-packages",
+        "${workspaceFolder}/submodules/parameters_utils/src/parameters_manager_ex",
     ],
     "terminal.integrated.profiles.linux": {
         "bash": {

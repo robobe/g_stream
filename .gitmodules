@@ -1,0 +1,3 @@
+[submodule "submodules/parameters_utils"]
+	path = submodules/parameters_utils
+	url = https://github.com/robobe/parameters_utils.git

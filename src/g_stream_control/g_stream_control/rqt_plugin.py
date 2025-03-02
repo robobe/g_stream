@@ -100,7 +100,7 @@ class DemoPlugin(Plugin):
         if state == "GST_STATE_PLAYING" or state == "GST_STATE_READY":
             self._widget.cmd_start_pipe.setStyleSheet("background-color: green;")
         else:
-            self._widget.cmd_start_pipe.setStyleSheet("background-color: red;")
+            self._widget.cmd_stop_pipe.setStyleSheet("background-color: red;")
 
 
     def update_select_preset(self, preset: str):

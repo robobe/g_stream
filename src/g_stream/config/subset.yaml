@@ -1,0 +1,6 @@
+/stream:
+low:
+    fps: 100
+    bitrate: 1
+    iframe_interval: 1
+    vbv: 1

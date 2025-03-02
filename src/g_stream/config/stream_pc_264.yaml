@@ -19,7 +19,7 @@
     medium.iframe_interval: 9
     medium.vbv: 350
     mtu: 1400
-    param_yaml_full_path: /workspace/src/g_stream/config/stream_pc_264.yaml
+    param_yaml_full_path: /workspace/src/g_stream/config/subset.yaml
     port: 5000
     preset: medium
     receiver_pipe: "\n                gst-launch-1.0 udpsrc port=5000 ! application/x-rtp,\

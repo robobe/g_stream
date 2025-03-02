@@ -9,3 +9,4 @@
 - [ ] install ament_add_pytest
 - [ ] use github project
 - [ ] Add vscode-github-projects
+- [ ] open rqt plugin as dockable 

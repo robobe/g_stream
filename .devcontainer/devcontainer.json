@@ -9,6 +9,7 @@
     "vscode": {
       "extensions": [
         "ms-vscode.cpptools",
+        "ms-vscode.cmake-tools",
         "twxs.cmake",
         "albert.tabout",
         "redhat.vscode-xml",

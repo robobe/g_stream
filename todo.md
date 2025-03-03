@@ -6,3 +6,7 @@
 - [ ] fix gui layout
 - [ ] check again pyuic5 (pip install pyqt5-tools)
 - [ ] learn more about parameter that not declared
+- [ ] install ament_add_pytest
+- [ ] use github project
+- [ ] Add vscode-github-projects
+- [ ] open rqt plugin as dockable 

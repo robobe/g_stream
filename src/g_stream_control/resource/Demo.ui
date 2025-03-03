@@ -144,6 +144,19 @@
     <string>Error Label</string>
    </property>
   </widget>
+  <widget class="QPushButton" name="cmdDump">
+   <property name="geometry">
+    <rect>
+     <x>590</x>
+     <y>370</y>
+     <width>80</width>
+     <height>23</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Dump</string>
+   </property>
+  </widget>
  </widget>
  <resources/>
  <connections/>

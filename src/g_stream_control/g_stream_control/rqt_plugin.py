@@ -11,13 +11,22 @@ from rcl_interfaces.srv import SetParameters, GetParameters
 from rcl_interfaces.msg import Parameter, ParameterValue
 from functools import partial
 from PyQt5.QtCore import pyqtSignal, QObject
-from PyQt5.QtWidgets import QApplication, QPushButton
+from PyQt5.QtWidgets import QApplication, QPushButton, QMessageBox
 
 PARAM_RECEIVER_PIPE = "receiver_pipe"
 PARAM_PRESET = "preset"
 PARAM_STATUS = "status"
 
 CONNECTION_RETRY = 3
+
+def msg_box(message: str):
+    msg = QMessageBox()
+    msg.setIcon(QMessageBox.Icon.Information)
+    msg.setText(message)
+    msg.setWindowTitle("Info")
+    msg.setStandardButtons(QMessageBox.Ok)
+    msg.exec_()
+
 
 class Worker(QObject):
     receiver_pipe = pyqtSignal(str)
@@ -38,6 +47,7 @@ class DemoPlugin(Plugin):
 
         # Create ROS 2 service client
         self.start_stop_client = self.node.create_client(SetBool, "/stream/start_stop")
+        self.dump = self.node.create_client(Trigger, "/stream/dump")
         # self.param_set = self.node.create_client(SetParameters, '/stream_node/set_parameters')
         self.preset_set = self.node.create_client(Preset, '/stream/set_preset')
         self._widget.laError.setStyleSheet("color: rgb(255,0,0);")
@@ -51,6 +61,7 @@ class DemoPlugin(Plugin):
             self._widget.cmd_high_preset.clicked.connect(partial(self.call_service, "high"))
             self._widget.cmd_start_pipe.clicked.connect(partial(self.start_stop_service, True))
             self._widget.cmd_stop_pipe.clicked.connect(partial(self.start_stop_service, False))
+            self._widget.cmdDump.clicked.connect(self.dump_parameters_to_vehicle)
             self._widget.cmdCopy.clicked.connect(self.copy_to_clipbard)
             self.worker.receiver_pipe.connect(self.update_receiver_pipe)
             self.worker.preset.connect(self.update_select_preset)
@@ -100,7 +111,7 @@ class DemoPlugin(Plugin):
         if state == "GST_STATE_PLAYING" or state == "GST_STATE_READY":
             self._widget.cmd_start_pipe.setStyleSheet("background-color: green;")
         else:
-            self._widget.cmd_start_pipe.setStyleSheet("background-color: red;")
+            self._widget.cmd_stop_pipe.setStyleSheet("background-color: red;")
 
 
     def update_select_preset(self, preset: str):
@@ -148,6 +159,17 @@ class DemoPlugin(Plugin):
             self.node.get_logger().error('Failed to get parameters')
 
 
+    def dump_parameters_to_vehicle(self):
+        request = Trigger.Request()
+        future = self.dump.call_async(request)
+        rclpy.spin_until_future_complete(self.node, future)
+
+        if future.result() is not None:
+            self.node.get_logger().info(f"dump to vehicle success")
+            msg_box("Parameters saved")
+        else:
+            self.node.get_logger().error('Failed to dump')
+
     def start_stop_service(self, state):
         request = SetBool.Request()
         request.data = state
@@ -155,7 +177,7 @@ class DemoPlugin(Plugin):
         rclpy.spin_until_future_complete(self.node, future)
 
         if future.result() is not None:
-            self.node.get_logger().info(f"start stop sucess")
+            self.node.get_logger().info(f"start stop success")
         else:
             self.node.get_logger().error('Failed start/stop pipe')
         self.load_parameters()

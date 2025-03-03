@@ -1,0 +1,12 @@
+/stream:
+    low:
+        fps: 200
+        bitrate: 1
+        iframe_interval: 1
+        vbv: 1
+/xxx:
+    low:
+        fps: 1000
+        bitrate: 1
+        iframe_interval: 1
+        vbv: 1

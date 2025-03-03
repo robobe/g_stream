@@ -11,13 +11,22 @@ from rcl_interfaces.srv import SetParameters, GetParameters
 from rcl_interfaces.msg import Parameter, ParameterValue
 from functools import partial
 from PyQt5.QtCore import pyqtSignal, QObject
-from PyQt5.QtWidgets import QApplication, QPushButton
+from PyQt5.QtWidgets import QApplication, QPushButton, QMessageBox
 
 PARAM_RECEIVER_PIPE = "receiver_pipe"
 PARAM_PRESET = "preset"
 PARAM_STATUS = "status"
 
 CONNECTION_RETRY = 3
+
+def msg_box(message: str):
+    msg = QMessageBox()
+    msg.setIcon(QMessageBox.Icon.Information)
+    msg.setText(message)
+    msg.setWindowTitle("Info")
+    msg.setStandardButtons(QMessageBox.Ok)
+    msg.exec_()
+
 
 class Worker(QObject):
     receiver_pipe = pyqtSignal(str)
@@ -157,6 +166,7 @@ class DemoPlugin(Plugin):
 
         if future.result() is not None:
             self.node.get_logger().info(f"dump to vehicle success")
+            msg_box("Parameters saved")
         else:
             self.node.get_logger().error('Failed to dump')
 
@@ -167,7 +177,7 @@ class DemoPlugin(Plugin):
         rclpy.spin_until_future_complete(self.node, future)
 
         if future.result() is not None:
-            self.node.get_logger().info(f"start stop sucess")
+            self.node.get_logger().info(f"start stop success")
         else:
             self.node.get_logger().error('Failed start/stop pipe')
         self.load_parameters()

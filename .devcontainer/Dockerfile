@@ -14,6 +14,7 @@ RUN apt-get update \
       rviz \
       ros-humble-rqt-image-view \
       ros-humble-rqt \
+      python3-colcon-clean \
    && apt-get autoremove -y \
    && apt-get clean -y \
    && rm -rf /var/lib/apt/lists/*

@@ -16,7 +16,16 @@ set(NODES
   g_stream/stream_node.py
 )
 
+set(APP_FILES
+  g_stream/bfid.py
+  g_stream/minimal_pipe.py
+)
 
+install(
+  FILES
+    ${APP_FILES}
+  DESTINATION lib/${PROJECT_NAME}
+)
 install(PROGRAMS
     ${NODES}
 DESTINATION lib/${PROJECT_NAME}

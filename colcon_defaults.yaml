@@ -1,6 +1,6 @@
 build:
   # Use symlink install to speed up builds
-  symlink-install: true
+  symlink-install: false
   # Set build type (e.g., Release or Debug)
   cmake-args:
     - "-DCMAKE_BUILD_TYPE=Release"

@@ -20,4 +20,9 @@ rosidl_generate_interfaces(${PROJECT_NAME}
 
 ament_export_dependencies(rosidl_default_runtime)
 
+
+if(DEFINED INCLUDE_CPACK)
+  include(${INCLUDE_CPACK})
+endif()
+
 ament_package()

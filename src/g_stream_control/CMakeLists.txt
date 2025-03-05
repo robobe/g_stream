@@ -31,4 +31,9 @@ install(DIRECTORY
 DESTINATION share/${PROJECT_NAME}
 )
 
+
+if(DEFINED INCLUDE_CPACK)
+  include(${INCLUDE_CPACK})
+endif()
+
 ament_package()

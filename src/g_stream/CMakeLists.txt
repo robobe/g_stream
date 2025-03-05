@@ -44,4 +44,8 @@ if(BUILD_TESTING)
   ament_add_pytest_test(test_param_load tests/test_dynamic_params.py)
 endif()
 
+if(DEFINED INCLUDE_CPACK)
+  include(${INCLUDE_CPACK})
+endif()
+
 ament_package()

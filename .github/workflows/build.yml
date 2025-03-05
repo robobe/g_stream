@@ -1,0 +1,21 @@
+name: My Action
+on: [workflow_dispatch]
+jobs:
+  build_demo:
+    runs-on: rome_arm
+    steps:
+      - name: Hello, World!
+        run: echo "build job hello world"
+      
+  build_g_stream_interface:
+    runs-on: rome_arm
+    steps:
+      - name: colcon
+        run: | 
+          source /opt/ros/humble/setup.bash && colcon build \
+          --packages-select g_stream_interface \
+          --cmake-args \
+          -DINCLUDE_CPACK=`pwd`/cmake/Packing.cmake  \
+          -DOUTPUT_FOLDER=`pwd`/debs 
+      - name: cpack
+        run: cd build/g_stream_interface && cpack

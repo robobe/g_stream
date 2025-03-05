@@ -24,6 +24,7 @@ RUN apt-get update \
    && apt-get -y install --no-install-recommends \
       tmux \
       ros-humble-gscam \
+      ros-humble-diagnostic-updater \
    && apt-get autoremove -y \
    && apt-get clean -y \
    && rm -rf /var/lib/apt/lists/*

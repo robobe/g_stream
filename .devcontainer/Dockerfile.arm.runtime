@@ -2,7 +2,7 @@ FROM arm64v8/ros:humble-ros-base
 
 ARG VERSION="0.0.1"
 
-RUN echo "runtime: ${VERSION}">>/etc/docker_images_version
+RUN echo "runtime: ${VERSION}">>/etc/docker_images_versions
 
 # region add user privilege
 ARG USERNAME=user

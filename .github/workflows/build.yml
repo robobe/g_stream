@@ -32,3 +32,16 @@ jobs:
           -DOUTPUT_FOLDER=`pwd`/debs 
       - name: cpack
         run: cd build/g_stream && cpack
+
+  build_parameters_manager_ex:
+    runs-on: arm
+    steps:
+      - name: colcon
+        run: | 
+          source /opt/ros/humble/setup.bash && colcon build \
+          --packages-up-to parameters_manager_ex \
+          --cmake-args \
+          -DINCLUDE_CPACK=`pwd`/cmake/Packing.cmake  \
+          -DOUTPUT_FOLDER=`pwd`/debs 
+      - name: cpack
+        run: cd build/parameters_manager_ex && cpack

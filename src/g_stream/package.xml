@@ -12,13 +12,11 @@
   <test_depend>ament_lint_common</test_depend>
   <test_depend>ament_cmake_pytest</test_depend>
   
-  <depend>g_stream_control</depend>
   <depend>g_stream_interface</depend>
   <depend>parameters_manager_ex</depend>
 
   <depend>diagnostic_updater</depend>
   <exec_depend>rosidl_default_runtime</exec_depend>
-  <depend>diagnostic-updater</depend>
   <export>
     <build_type>ament_cmake</build_type>
   </export>

@@ -125,3 +125,23 @@ gst-launch-1.0 udpsrc port=5000 ! application/x-rtp, encoding-name=H264, payload
 
 
 ![alt text](images/rqt_control.png)
+
+
+### Services
+
+| name  | Description  |
+|---|---|
+| set_preset  | set preset  parameter and restart the stream |
+| start_stop  | start / stop stream  |
+
+
+```bash
+ros2 service call /stream/start_stop std_srvs/srv/SetBool "{data: true}"
+ros2 service call /stream/start_stop std_srvs/srv/SetBool "{data: false}"
+```
+
+```bash
+ros2 service call /stream/set_preset g_stream_interface/srv/Preset "{preset: high}"
+ros2 service call /stream/set_preset g_stream_interface/srv/Preset "{preset: low}"
+```
+

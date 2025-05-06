@@ -427,7 +427,6 @@ class StreamHandlerNode(Node):
     
     def state_changed_handler(self, state):
         self.get_logger().info("--------- state change")
-        print(state.value_name)
         self.set_parameters([Parameter(PARAM_STATUS, Parameter.Type.STRING, state.value_name)])
 
     def play(self):

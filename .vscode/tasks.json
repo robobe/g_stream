@@ -24,18 +24,9 @@
             "command": "docker build -f .devcontainer/Dockerfile.runtime  -t pov:runtime ."
         },
         {
-          "label": "create debian package",
-          "type": "shell",
-          "command": "cpack",
-          "options": {
-            "cwd": "${workspaceFolder}/build/${input:packages}",
-            "shell": {
-              "executable": "source",
-              "args": ["/opt/ros/humble/setup.bash"]
-            }
-          },
-          "dependsOn": ["colcon"],
-          "problemMatcher": []
+            "label": "git archive",
+            "type": "shell",
+            "command": "git archive --format=tar --output=${workspaceFolder}/archive/gst_stream_ws.tar HEAD"
         }
 
     ],
@@ -45,7 +36,7 @@
             "description": "application packages",
             "type": "pickString",
             "options": [
-                "GStream",
+                "g_stream",
                 "parameters_manager_ex"
             ]
         }

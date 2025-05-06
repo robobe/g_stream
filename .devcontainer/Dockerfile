@@ -1,4 +1,4 @@
-FROM pov:dev
+FROM humble:dev
 
 ARG VERSION=0.0.1
 
@@ -29,7 +29,27 @@ RUN apt-get update \
    && apt-get clean -y \
    && rm -rf /var/lib/apt/lists/*
 
+#
+# install gstreamer
+#
+RUN apt-get update \
+&& apt-get -y install --no-install-recommends \
+    libgstreamer1.0-0 \
+    gstreamer1.0-plugins-base \
+    gstreamer1.0-plugins-good \
+    gstreamer1.0-plugins-bad \
+    gstreamer1.0-plugins-ugly \
+    gstreamer1.0-tools \
+    python3-gi \
+    gir1.2-gstreamer-1.0 \
+    libgstreamer-plugins-base1.0-dev \
+    gstreamer1.0-libav \
+    gstreamer-1.0 \
+&& apt-get clean -y \
+&& rm -rf /var/lib/apt/lists/*
 
 ENV DEBIAN_FRONTEND=dialog
 
 USER user
+
+RUN pip install klvdata

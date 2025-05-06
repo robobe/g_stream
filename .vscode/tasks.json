@@ -22,7 +22,13 @@
             "label": "build docker runtime",
             "type": "shell",
             "command": "docker build -f .devcontainer/Dockerfile.runtime  -t pov:runtime ."
+        },
+        {
+            "label": "git archive",
+            "type": "shell",
+            "command": "git archive --format=tar --output=${workspaceFolder}/archive/gst_stream_ws.tar HEAD"
         }
+
     ],
     "inputs": [
         {
@@ -30,7 +36,8 @@
             "description": "application packages",
             "type": "pickString",
             "options": [
-                "GStream"
+                "g_stream",
+                "parameters_manager_ex"
             ]
         }
     ]

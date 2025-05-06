@@ -5,10 +5,10 @@
     encoder_type: h264
     hardware: pc
     height: 480
-    high.bitrate: 500
+    high.bitrate: 1000
     high.fps: 9
     high.iframe_interval: 9
-    high.vbv: 500
+    high.vbv: 1000
     ip_address: 127.0.0.1
     low.bitrate: 200
     low.fps: 5
@@ -21,7 +21,7 @@
     mtu: 1400
     param_yaml_full_path: /workspace/src/g_stream/config/subset.yaml
     port: 5000
-    preset: medium
+    preset: high
     receiver_pipe: "\n                gst-launch-1.0 udpsrc port=5000 ! application/x-rtp,\
       \ encoding-name=H264, payload=96 ! rtpjitterbuffer latency=10 ! rtph264depay\
       \ ! avdec_h264 ! videoconvert ! fpsdisplaysink sync=true\n                "

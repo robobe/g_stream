@@ -16,7 +16,16 @@ set(NODES
   g_stream/stream_node.py
 )
 
+set(APP_FILES
+  g_stream/bfid.py
+  g_stream/minimal_pipe.py
+)
 
+install(
+  FILES
+    ${APP_FILES}
+  DESTINATION lib/${PROJECT_NAME}
+)
 install(PROGRAMS
     ${NODES}
 DESTINATION lib/${PROJECT_NAME}
@@ -33,6 +42,10 @@ DESTINATION share/${PROJECT_NAME}
 if(BUILD_TESTING)
   find_package(ament_cmake_pytest REQUIRED)
   ament_add_pytest_test(test_param_load tests/test_dynamic_params.py)
+endif()
+
+if(DEFINED INCLUDE_CPACK)
+  include(${INCLUDE_CPACK})
 endif()
 
 ament_package()

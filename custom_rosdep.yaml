@@ -1,0 +1,4 @@
+parameters_utils:
+  ubuntu:
+    path: /workspace/submodules/parameters_utils
+    apt: ros-humble-parameters-utils

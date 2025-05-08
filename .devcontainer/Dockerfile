@@ -25,6 +25,7 @@ RUN apt-get update \
       tmux \
       ros-humble-gscam \
       ros-humble-diagnostic-updater \
+      ros-humble-cv-bridge \
    && apt-get autoremove -y \
    && apt-get clean -y \
    && rm -rf /var/lib/apt/lists/*

@@ -14,20 +14,14 @@
             "problemMatcher": []
         },
         {
-            "label": "build docker dev",
+            "label": "build gstream interface",
             "type": "shell",
-            "command": "docker build -f .devcontainer/Dockerfile.dev  -t pov:dev ."
+            "command": "bloom-generate rosdebian --ros-distro humble && fakeroot debian/rules binary",
+            "options": {
+                "cwd": "${workspaceFolder}/src/g_stream_interface",
+            },
         },
-        {
-            "label": "build docker runtime",
-            "type": "shell",
-            "command": "docker build -f .devcontainer/Dockerfile.runtime  -t pov:runtime ."
-        },
-        {
-            "label": "git archive",
-            "type": "shell",
-            "command": "git archive --format=tar --output=${workspaceFolder}/archive/gst_stream_ws.tar HEAD"
-        }
+        
 
     ],
     "inputs": [

@@ -4,7 +4,9 @@ install/
 zenoh/
 *.pyc
 debs/
-.obj*
+# .obj*
 debian/
 *.deb
 *.ddeb
+**/.obj-*-linux-gnu
+*.pyc

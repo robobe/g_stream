@@ -4,7 +4,7 @@
         {
             "label": "build gstream control",
             "type": "shell",
-            "command": "bloom-generate rosdebian --ros-distro humble && fakeroot debian/rules binary",
+            "command": "bloom-generate rosdebian --ros-distro humble && ./debian_scripts/patch_rule.sh && ./debian_scripts/patch_compat.sh && fakeroot debian/rules binary",
             "options": {
                 "cwd": "${workspaceFolder}/src/g_stream_control",
             }

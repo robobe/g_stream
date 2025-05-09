@@ -1,4 +1,9 @@
-parameters_utils:
+parameters_manager_ex:
   ubuntu:
     path: /workspace/submodules/parameters_utils
-    apt: ros-humble-parameters-utils
+    apt: ros-humble-parameters-manager-ex
+
+g_stream_interface:
+  ubuntu:
+    path: /workspace/g_stream/src/g_stream_interface
+    apt: ros-humble-g-stream-interface

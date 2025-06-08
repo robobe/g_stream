@@ -7,6 +7,10 @@ RUN echo "image dev version: ${VERSION}">/etc/docker_image_dev_version
 
 ENV DEBIAN_FRONTEND=noninteractive
 
+RUN apt-key del F42ED6FBAB17C654
+RUN curl -fsSL https://raw.githubusercontent.com/ros/rosdistro/master/ros.key -o /usr/share/keyrings/ros-archive-keyring.gpg
+
+
 # dev
 RUN apt-get update \
    && apt-get -y install --no-install-recommends \
